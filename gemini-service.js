@@ -57,6 +57,7 @@ const GeminiService = {
    * إرسال طلب المستخدم وسياق الإكسيل إلى Gemini والحصول على الرد والإجراءات
    */
   async sendMessage(userMessage, contextData, options = {}) {
+    const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
     let model = options.model || localStorage.getItem("gemini_model") || "gemini-1.5-flash";
     // تصحيح تلقائي إذا كان الموديل القديم مسجلاً
     if (model.includes("2.5")) {
