@@ -63,12 +63,38 @@ const ExcelEngine = {
     const executedDetails = [];
 
     await Excel.run(async (context) => {
-      const activeSheet = context.workbook.worksheets.getActiveWorksheet();
+      let currentActive = context.workbook.worksheets.getActiveWorksheet();
 
       for (const action of actionsList) {
-        const targetSheet = action.sheetName 
-          ? context.workbook.worksheets.getItem(action.sheetName) 
-          : activeSheet;
+        // 1. التعامل مع إنشاء أو تفعيل ورقة عمل جديدة بأمان تام
+        if (action.type === "CREATE_SHEET") {
+          if (action.sheetName) {
+            const existingSheet = context.workbook.worksheets.getItemOrNullObject(action.sheetName);
+            await context.sync();
+
+            let targetSheet;
+            if (existingSheet.isNullObject) {
+              targetSheet = context.workbook.worksheets.add(action.sheetName);
+            } else {
+              targetSheet = existingSheet;
+            }
+            targetSheet.activate();
+            currentActive = targetSheet;
+            await context.sync();
+            executedDetails.push(`إنشاء/تفعيل الورقة: ${action.sheetName}`);
+          }
+          continue;
+        }
+
+        // تحديد الورقة المستهدفة للأوامر الأخرى بأمان
+        let targetSheet = currentActive;
+        if (action.sheetName) {
+          const sheetObj = context.workbook.worksheets.getItemOrNullObject(action.sheetName);
+          await context.sync();
+          if (!sheetObj.isNullObject) {
+            targetSheet = sheetObj;
+          }
+        }
 
         switch (action.type) {
           
@@ -148,12 +174,11 @@ const ExcelEngine = {
           case "ADD_CHART": {
             if (action.dataRange) {
               const dataRange = targetSheet.getRange(action.dataRange);
-              const chartType = action.chartType || "ColumnClustered"; // Line, Pie, BarClustered, etc.
+              const chartType = action.chartType || "ColumnClustered";
               const chart = targetSheet.charts.add(chartType, dataRange, "Auto");
               chart.title.text = action.title || "رسم بياني توضيحي";
               chart.legend.position = "Top";
               
-              // تحديد مكان ظهور الرسم
               if (action.targetCell) {
                 chart.setPosition(action.targetCell);
               }
@@ -166,16 +191,6 @@ const ExcelEngine = {
           case "FREEZE_PANES": {
             targetSheet.freezePanes.freezeRows(action.rows || 1);
             executedDetails.push(`تجميد الصفوف العلوية`);
-            break;
-          }
-
-          // 8. إنشاء ورقة عمل جديدة
-          case "CREATE_SHEET": {
-            if (action.sheetName) {
-              const newSheet = context.workbook.worksheets.add(action.sheetName);
-              newSheet.activate();
-              executedDetails.push(`إنشاء ورقة جديدة: ${action.sheetName}`);
-            }
             break;
           }
         }
