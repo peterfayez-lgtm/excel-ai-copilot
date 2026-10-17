@@ -8,15 +8,15 @@
 
   <!-- معرف فريد للإضافة -->
   <Id>7d3b0738-d113-4b44-934e-0a5682054139</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.1</Version>
   <ProviderName>Peter AI</ProviderName>
-  <DefaultLocale>ar-SA</DefaultLocale>
-  <DisplayName DefaultValue="المساعد الذكي للإكسيل (AI Copilot)"/>
-  <Description DefaultValue="مساعد ذكاء اصطناعي محترف لتنفيذ الأوامر، التحليل المالي، كتابة الدوال، وتنسيق الجداول تلقائياً."/>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="AI Copilot (المساعد الذكي)"/>
+  <Description DefaultValue="AI Copilot for Excel - مساعد ذكاء اصطناعي محترف لتنفيذ الأوامر والتحليل المالي وتنسيق الجداول."/>
   
   <IconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-80.png"/>
-  <SupportUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/help.html"/>
+  <SupportUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/taskpane.html"/>
   
   <Hosts>
     <Host Name="Workbook"/>
@@ -32,9 +32,9 @@
     <Hosts>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
-          <!-- إضافة زر المساعد في الشريط الرئيسي (Home Ribbon Tab) -->
+          <!-- إضافة الزر في شريط Home الرئيسي عبر OfficeTab -->
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
-            <CustomTab id="TabHome">
+            <OfficeTab id="TabHome">
               <Group id="PeterAiCopilotGroup">
                 <Label resid="GroupLabel"/>
                 <Icon>
@@ -60,7 +60,7 @@
                   </Action>
                 </Control>
               </Group>
-            </CustomTab>
+            </OfficeTab>
           </ExtensionPoint>
         </DesktopFormFactor>
       </Host>
@@ -76,12 +76,12 @@
         <bt:Url id="TaskpaneUrl" DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel" DefaultValue="المساعد الذكي"/>
-        <bt:String id="ButtonLabel" DefaultValue="تشغيل الوكيل AI"/>
-        <bt:String id="ButtonTitle" DefaultValue="وكيل إكسيل الذكي"/>
+        <bt:String id="GroupLabel" DefaultValue="AI Copilot"/>
+        <bt:String id="ButtonLabel" DefaultValue="AI Copilot"/>
+        <bt:String id="ButtonTitle" DefaultValue="المساعد الذكي (AI Copilot)"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="ButtonDesc" DefaultValue="فتح الشريط الجانبي للتحدث مع وكيل الذكاء الاصطناعي وتنفيذ العمليات على الشيت."/>
+        <bt:String id="ButtonDesc" DefaultValue="فتح المساعد الذكي للتحدث مع الذكاء الاصطناعي وتنفيذ الأوامر على الشيت."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

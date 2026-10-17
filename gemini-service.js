@@ -57,8 +57,11 @@ const GeminiService = {
    * إرسال طلب المستخدم وسياق الإكسيل إلى Gemini والحصول على الرد والإجراءات
    */
   async sendMessage(userMessage, contextData, options = {}) {
-    const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
-    const model = options.model || localStorage.getItem("gemini_model") || "gemini-2.5-flash";
+    let model = options.model || localStorage.getItem("gemini_model") || "gemini-1.5-flash";
+    // تصحيح تلقائي إذا كان الموديل القديم مسجلاً
+    if (model.includes("2.5")) {
+      model = "gemini-1.5-flash";
+    }
     const personaKey = options.persona || "cfo";
     const customInstructions = options.customInstructions || localStorage.getItem("gemini_custom_instructions") || "";
 
@@ -120,8 +123,13 @@ ${customInstructions ? `تعليمات إضافية مخصصة من المستخ
       if (contextData.values && contextData.values.length > 0) {
         userPromptWithContext += `- محتوى الخلايا المحددة:\n${JSON.stringify(contextData.values)}\n`;
       }
-      if (contextData.formulas && contextData.formulas.some(row => row.some(cell => cell && cell.startsWith('=')))) {
-        userPromptWithContext += `- المعادلات الموجودة في النطاق:\n${JSON.stringify(contextData.formulas)}\n`;
+      if (contextData.formulas && Array.isArray(contextData.formulas)) {
+        const hasFormulas = contextData.formulas.some(row => 
+          Array.isArray(row) && row.some(cell => typeof cell === 'string' && cell.startsWith('='))
+        );
+        if (hasFormulas) {
+          userPromptWithContext += `- المعادلات الموجودة في النطاق:\n${JSON.stringify(contextData.formulas)}\n`;
+        }
       }
     }
 
