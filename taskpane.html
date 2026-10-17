@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel AI Copilot</title>
+  
+  <!-- مكتبة مايكروسوفت أوفيس الرسمية -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  
+  <!-- خطوط وأيقونات حديثة -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- ملف التنسيقات -->
+  <link rel="stylesheet" href="taskpane.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- الشريط العلوي (Header) -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-box">
+          <span class="logo-icon">📊</span>
+        </div>
+        <div class="header-titles">
+          <h1>المساعد الذكي للإكسيل</h1>
+          <span class="status-indicator online" id="statusIndicator">
+            <span class="dot"></span> <span id="statusText">جاهز للعمل</span>
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnSettings" title="الإعدادات ومفتاح API">⚙️</button>
+        <button class="icon-btn" id="btnClearChat" title="مسح المحادثة">🗑️</button>
+      </div>
+    </header>
+
+    <!-- شريط اختيار شخصية ومهنة الوكيل (Persona Selector) -->
+    <div class="persona-section">
+      <label for="personaSelect" class="section-label">مهنة وشخصية الوكيل:</label>
+      <div class="persona-dropdown-wrapper">
+        <select id="personaSelect" class="persona-select">
+          <option value="cfo" selected>💼 خبير مالي ومحاسب محترف (CFO & Modeler)</option>
+          <option value="analyst">📊 محلل بيانات وإحصاء (Data Analyst)</option>
+          <option value="operations">📦 مدير عمليات وسلاسل إمداد (Supply Chain)</option>
+          <option value="executive">⚡ مساعد تنفيذي وإداري شامل (Executive)</option>
+        </select>
+      </div>
+      <div class="persona-badge" id="personaBadge">
+        يركز على: ضبط الحسابات، القوائم المالية، تنسيق العملات، وفحص الميزانيات.
+      </div>
+    </div>
+
+    <!-- شريط فحص النطاق والشيت الحالي (Context Bar) -->
+    <div class="context-bar">
+      <div class="context-info">
+        <span class="context-sheet-icon">📄</span>
+        <span class="sheet-name" id="currentSheetName">ورقة: ...</span>
+        <span class="divider">|</span>
+        <span class="selection-range" id="currentSelection">التحديد: A1</span>
+      </div>
+      <button class="refresh-context-btn" id="btnRefreshContext" title="تحديث النطاق المحدد">🔄</button>
+    </div>
+
+    <!-- أزرار الإجراءات السريعة (Quick Action Chips) -->
+    <div class="quick-actions-bar">
+      <button class="action-chip" data-prompt="قم بتنسيق الجدول الحالي بتصميم احترافي مع تمييز العناوين والحدود.">🎨 تنسيق الجدول</button>
+      <button class="action-chip" data-prompt="افحص هذا النطاق بحثاً عن أخطاء الحسابات (#DIV/0!, #VALUE!, #REF!) واقترح الحلول.">🔍 فحص الأخطاء</button>
+      <button class="action-chip" data-prompt="اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 رسم بياني</button>
+      <button class="action-chip" data-prompt="أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ صف الإجمالي</button>
+      <button class="action-chip" data-prompt="حلل هذه الأرقام واكتب لي ملخصاً بأهم 3 ملاحظات وتوصيات.">💡 تلخيص الأرقام</button>
+    </div>
+
+    <!-- نافذة المحادثة (Chat Area) -->
+    <main class="chat-container" id="chatContainer">
+      <!-- رسالة الترحيب الافتراضية -->
+      <div class="message assistant-message welcome-message">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <p><strong>أهلاً بك! أنا وكيلك الذكي في إكسيل.</strong></p>
+          <p>أنا متصل مباشرة بشيت الإكسيل المفتوح أمامك الآن. حدد أي خلايا، واطلب مني ما تريده بلغتك الطبيعية:</p>
+          <ul>
+            <li>تنسيق الجداول وتجميلها بألوان الشركات القياسية</li>
+            <li>كتابة معادلات متقدمة (XLOOKUP, SUMIFS, IF...)</li>
+            <li>إنشاء الرسوم البيانية والجداول التفاعلية</li>
+            <li>التحليل المالي والإحصائي للبيانات</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- شريط الإدخال والإرسال (Chat Input) -->
+    <footer class="app-footer">
+      <div class="include-context-wrapper">
+        <label class="checkbox-container">
+          <input type="checkbox" id="chkIncludeContext" checked>
+          <span class="checkmark"></span>
+          قراءة محتوى الخلايا المحددة تلقائياً مع الأمر
+        </label>
+      </div>
+      
+      <div class="input-row">
+        <textarea 
+          id="userInput" 
+          rows="1" 
+          placeholder="اطلب أي شيء من الوكيل... (مثلاً: رتّب الجدول واحسب متوسط الأرباح)"
+        ></textarea>
+        <button id="btnSend" class="btn-send" title="إرسال">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- نافذة الإعدادات المنبثقة (Settings Modal) -->
+    <div class="modal-overlay" id="settingsModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>⚙️ إعدادات الذكاء الاصطناعي</h3>
+          <button class="modal-close-btn" id="btnCloseSettings">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="apiKeyInput">مفتاح Google Gemini API المجاني:</label>
+            <input type="password" id="apiKeyInput" placeholder="الصق المفتاح هنا (AIzaSy...)" autocomplete="off">
+            <div class="help-text">
+              احصل على مفتاحك المجاني 100% خلال دقيقة واحدة من: 
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+              <br><small>المفتاح يُحفظ محلياً على جهازك فقط ولا يشاركه أحد.</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="modelSelect">نموذج الذكاء الاصطناعي (مجاني):</label>
+            <select id="modelSelect">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (الأسرع والأحدث - موصى به)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash (سريع ومستقر جداً)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="customInstructions">تعليمات أو ملاحظات خاصة للشخصية (اختياري):</label>
+            <textarea id="customInstructions" rows="3" placeholder="مثال: استخدم دائماً عملة الجنيه المصري EGP، أو ضع أسماء الأعمدة بخط عريض داكن..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCancelSettings">إلغاء</button>
+          <button class="btn btn-primary" id="btnSaveSettings">حفظ الإعدادات</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ملفات منطق الإضافة -->
+  <script src="excel-actions.js"></script>
+  <script src="gemini-service.js"></script>
+  <script src="taskpane.js"></script>
+</body>
+</html>

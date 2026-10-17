@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp 
+    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
+    xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" 
+    xsi:type="TaskPaneApp">
+
+  <!-- معرف فريد للإضافة -->
+  <Id>7d3b0738-d113-4b44-934e-0a5682054139</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Peter AI</ProviderName>
+  <DefaultLocale>ar-SA</DefaultLocale>
+  <DisplayName DefaultValue="المساعد الذكي للإكسيل (AI Copilot)"/>
+  <Description DefaultValue="مساعد ذكاء اصطناعي محترف لتنفيذ الأوامر، التحليل المالي، كتابة الدوال، وتنسيق الجداول تلقائياً."/>
+  
+  <IconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-80.png"/>
+  <SupportUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/help.html"/>
+  
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+  
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/taskpane.html"/>
+  </DefaultSettings>
+  
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+          <!-- إضافة زر المساعد في الشريط الرئيسي (Home Ribbon Tab) -->
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="TabHome">
+              <Group id="PeterAiCopilotGroup">
+                <Label resid="GroupLabel"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon16"/>
+                  <bt:Image size="32" resid="Icon32"/>
+                  <bt:Image size="80" resid="Icon80"/>
+                </Icon>
+                
+                <Control xsi:type="Button" id="OpenCopilotTaskpaneButton">
+                  <Label resid="ButtonLabel"/>
+                  <Supertip>
+                    <Title resid="ButtonTitle"/>
+                    <Description resid="ButtonDesc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon16"/>
+                    <bt:Image size="32" resid="Icon32"/>
+                    <bt:Image size="80" resid="Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>PeterAiCopilotTaskpane</TaskpaneId>
+                    <SourceLocation resid="TaskpaneUrl"/>
+                  </Action>
+                </Control>
+              </Group>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon16" DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-16.png"/>
+        <bt:Image id="Icon32" DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-32.png"/>
+        <bt:Image id="Icon80" DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="TaskpaneUrl" DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GroupLabel" DefaultValue="المساعد الذكي"/>
+        <bt:String id="ButtonLabel" DefaultValue="تشغيل الوكيل AI"/>
+        <bt:String id="ButtonTitle" DefaultValue="وكيل إكسيل الذكي"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="ButtonDesc" DefaultValue="فتح الشريط الجانبي للتحدث مع وكيل الذكاء الاصطناعي وتنفيذ العمليات على الشيت."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
