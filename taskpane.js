@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem("gemini_api_key") || "";
-    modelSelect.value = localStorage.getItem("gemini_model") || "gemini-2.5-flash";
+    modelSelect.value = localStorage.getItem("gemini_model") || "gemini-3.8-flash";
     customInstructions.value = localStorage.getItem("gemini_custom_instructions") || "";
     
     const savedPersona = localStorage.getItem("gemini_persona") || "cfo";

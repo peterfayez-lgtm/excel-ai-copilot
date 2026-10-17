@@ -58,10 +58,10 @@ const GeminiService = {
    */
   async sendMessage(userMessage, contextData, options = {}) {
     const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
-    let model = options.model || localStorage.getItem("gemini_model") || "gemini-1.5-flash";
-    // تصحيح تلقائي إذا كان الموديل القديم مسجلاً
-    if (model.includes("2.5")) {
-      model = "gemini-1.5-flash";
+    let model = options.model || localStorage.getItem("gemini_model") || "gemini-3.8-flash";
+    // استخدام الموديل المعتمد والأحدث من خوادم جوجل
+    if (!model || model.includes("2.") || model.includes("1.")) {
+      model = "gemini-3.8-flash";
     }
     const personaKey = options.persona || "cfo";
     const customInstructions = options.customInstructions || localStorage.getItem("gemini_custom_instructions") || "";
