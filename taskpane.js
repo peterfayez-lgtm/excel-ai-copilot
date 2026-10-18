@@ -28,6 +28,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusText = document.getElementById("statusText");
   const actionChips = document.querySelectorAll(".action-chip");
 
+  // عناصر إرفاق ومعاينة الصور
+  const btnAttachImage = document.getElementById("btnAttachImage");
+  const imageFileInput = document.getElementById("imageFileInput");
+  const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+  const imagePreviewImg = document.getElementById("imagePreviewImg");
+  const imagePreviewName = document.getElementById("imagePreviewName");
+  const btnRemoveImage = document.getElementById("btnRemoveImage");
+
+  let attachedImage = null; // { data: string (base64), mimeType: string, dataUrl: string, name: string }
+
   // نصوص توضيحية للشخصيات
   const personaDescriptions = {
     cfo: "يركز على: ضبط الحسابات، القوائم المالية، تنسيق العملات، وفحص الميزانيات بدقة محاسبية.",
@@ -35,6 +45,80 @@ document.addEventListener("DOMContentLoaded", () => {
     operations: "يركز على: تتبع الكميات، المهل الزمنية، مستويات المخزون، والتنبيهات اللونية.",
     executive: "يركز على: السرعة والمرونة، التنسيق الشامل، وصياغة ملخصات الأعمال الأنيقة."
   };
+
+  // وظائف إدارة إرفاق ومعاينة الصور
+  function showImagePreview(file, dataUrl) {
+    const base64Data = dataUrl.split(",")[1];
+    const mimeType = file.type || "image/png";
+    const fileName = file.name || "صورة_ملصقة.png";
+    
+    attachedImage = {
+      data: base64Data,
+      mimeType: mimeType,
+      dataUrl: dataUrl,
+      name: fileName
+    };
+
+    imagePreviewImg.src = dataUrl;
+    imagePreviewName.textContent = fileName.length > 25 ? fileName.substring(0, 22) + "..." : fileName;
+    imagePreviewContainer.style.display = "flex";
+  }
+
+  function clearAttachedImage() {
+    attachedImage = null;
+    imagePreviewImg.src = "";
+    imagePreviewContainer.style.display = "none";
+    if (imageFileInput) imageFileInput.value = "";
+  }
+
+  if (btnRemoveImage) {
+    btnRemoveImage.addEventListener("click", clearAttachedImage);
+  }
+
+  if (btnAttachImage && imageFileInput) {
+    btnAttachImage.addEventListener("click", () => {
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        alert("يرجى اختيار ملف صورة صالح (PNG, JPG, WEBP, إلخ).");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        showImagePreview(file, evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // الاستماع للنسخ واللصق المباشر من الحافظة (Ctrl + V)
+  window.addEventListener("paste", (e) => {
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    const items = clipboardData.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.startsWith("image/")) {
+        const file = items[i].getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            showImagePreview(file, evt.target.result);
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    }
+  });
 
   // تهيئة مايكروسوفت أوفيس
   if (typeof Office !== "undefined") {
@@ -138,13 +222,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // إرسال الرسائل والأوامر
   // ----------------------------------------------------
   async function handleSend() {
-    const message = userInput.value.trim();
-    if (!message) return;
+    const text = userInput.value.trim();
+    if (!text && !attachedImage) return;
 
-    // إضافة رسالة المستخدم للواجهة
-    appendMessage(message, "user");
+    const currentImage = attachedImage; // احتفاظ بنسخة من الصورة المرفقة إن وجدت
+    const messageToSend = text || "قم بقراءة الجدول الموجود في الصورة المرفقة وإنشائه في الإكسيل بنفس بياناته وتنسيقاته بدقة.";
+
+    // إضافة رسالة المستخدم للواجهة مع الصورة
+    appendMessage(messageToSend, "user", null, currentImage ? currentImage.dataUrl : null);
     userInput.value = "";
     userInput.style.height = "auto";
+    clearAttachedImage();
     
     setLoadingState(true);
 
@@ -155,10 +243,11 @@ document.addEventListener("DOMContentLoaded", () => {
         contextData = await ExcelEngine.getContext();
       }
 
-      // إرسال الطلب لـ Gemini
-      const response = await GeminiService.sendMessage(message, contextData, {
+      // إرسال الطلب لـ Gemini مع الصورة وسياق الشيت
+      const response = await GeminiService.sendMessage(messageToSend, contextData, {
         persona: personaSelect.value,
-        safeMode: chkNewSheetMode ? chkNewSheetMode.checked : true
+        safeMode: chkNewSheetMode ? chkNewSheetMode.checked : true,
+        image: currentImage ? { mimeType: currentImage.mimeType, data: currentImage.data } : null
       });
 
       // عرض رد الذكاء الاصطناعي
@@ -222,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   // وظائف مساعدة لعرض الرسائل وتأثيرات الواجهة
   // ----------------------------------------------------
-  function appendMessage(text, sender, suggestions = null) {
+  function appendMessage(text, sender, suggestions = null, imageUrl = null) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}-message`;
 
@@ -232,7 +321,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const content = document.createElement("div");
     content.className = "message-content";
-    content.innerHTML = formatMarkdown(text);
+
+    // عرض الصورة المرفقة إن وجدت في فقاعة الرسالة
+    if (imageUrl) {
+      const img = document.createElement("img");
+      img.src = imageUrl;
+      img.className = "message-image";
+      img.title = "انقر لفتح الصورة بحجم كامل";
+      img.addEventListener("click", () => {
+        const w = window.open("");
+        if (w) {
+          w.document.write(`<img src="${imageUrl}" style="max-width:100%; height:auto;">`);
+        }
+      });
+      content.appendChild(img);
+    }
+
+    const textDiv = document.createElement("div");
+    textDiv.innerHTML = formatMarkdown(text);
+    content.appendChild(textDiv);
 
     // إضافة أزرار المقترحات التفاعلية للاستكمال بنقرة واحدة
     if (suggestions && Array.isArray(suggestions) && suggestions.length > 0) {
