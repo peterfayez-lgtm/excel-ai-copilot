@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       // عرض رد الذكاء الاصطناعي
-      appendMessage(response.reply, "assistant");
+      appendMessage(response.reply, "assistant", response.suggestions);
 
       // تنفيذ الأوامر على الشيت فورياً إن وجدت
       if (response.actions && response.actions.length > 0) {
@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   // وظائف مساعدة لعرض الرسائل وتأثيرات الواجهة
   // ----------------------------------------------------
-  function appendMessage(text, sender) {
+  function appendMessage(text, sender, suggestions = null) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}-message`;
 
@@ -233,6 +233,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const content = document.createElement("div");
     content.className = "message-content";
     content.innerHTML = formatMarkdown(text);
+
+    // إضافة أزرار المقترحات التفاعلية للاستكمال بنقرة واحدة
+    if (suggestions && Array.isArray(suggestions) && suggestions.length > 0) {
+      const suggestionsBox = document.createElement("div");
+      suggestionsBox.className = "message-suggestions";
+
+      const title = document.createElement("div");
+      title.className = "suggestions-title";
+      title.innerHTML = "<span>⚡ خيارات واستكمال مقترحات الوكيل بنقرة واحدة:</span>";
+      suggestionsBox.appendChild(title);
+
+      suggestions.forEach(sugText => {
+        const btn = document.createElement("button");
+        btn.className = "suggestion-btn";
+        btn.textContent = sugText;
+        btn.title = "اضغط للمتابعة والتنفيذ الفوري";
+        btn.addEventListener("click", () => {
+          userInput.value = sugText;
+          handleSend();
+        });
+        suggestionsBox.appendChild(btn);
+      });
+
+      content.appendChild(suggestionsBox);
+    }
 
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(content);
