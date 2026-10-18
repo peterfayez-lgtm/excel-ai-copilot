@@ -108,7 +108,23 @@ ${safeMode ? `
 3. التزام صارم ببيانات الصورة: انقل الأرقام والصفوف الموجودة فعلياً في الصورة فقط، ولا تؤلف أي أرقام من خيالك.
 4. ربط الجداول ببعضها (Linking Tables): إذا طلب المستخدم ربط هذا الجدول بجدول آخر في ملف الإكسيل (مثل ربطه ببيانات العملاء، شيت المبيعات، أو قاعدة بيانات المخزون):
    - استخدم دوال الإكسيل الذكية للربط مثل XLOOKUP, VLOOKUP, INDEX/MATCH, SUMIFS.
-   - ضع هذه الدوال في مصفوفة SET_FORMULAS لربط الأعمدة المشتركة (مثل كود العميل، رقم الصنف، أو رقم الفاتورة) بشكل تلقائي وتفاعلي.
+قواعد الربط بين أوراق العمل (Tabs) وكتابة المعادلات المشتركة:
+1. الصلاحية التامة: لديك الصلاحية الكاملة والمطلقة لإنشاء أوراق عمل جديدة وربطها بأي ورقة عمل أخرى موجودة في الملف، أو كتابة معادلات في جدول بتابة تشير إلى تابة أخرى.
+2. ممنوع الرفض نهائياً: ممنوع منعاً باتاً أن ترفض أو تعتذر عن إنشاء ورقة مربوطة بورقة أخرى أو تقول "لا يمكنني الوصول إلى الورقة الأخرى" أو "حدد الخلايا في الورقة الأخرى أولاً"؛ لأن خريطة كافة أوراق العمل (Tabs) وأعمدتها ونطاقاتها متوفرة لديك بالتفصيل في سياق الملف أدناه.
+3. الصياغة الإلزامية لمعادلات الربط العابرة للأوراق في إكسيل (Cross-Sheet Formulas):
+   - يجب دائماً وأبداً إحاطة اسم الورقة المرجعية بعلامتي تنصيص مفردة 'اسم_الورقة' متبوعة بـ ! واسم الخلية أو النطاق، أمثلة:
+     ='العملاء'!A2
+     =XLOOKUP(A2, 'العملاء'!A:A, 'العملاء'!B:B, "غير موجود")
+     =VLOOKUP(A2, 'قاعدة_الموردين'!A:E, 3, FALSE)
+     =SUMIFS('المبيعات'!D:D, 'المبيعات'!B:B, A2)
+     =INDEX('المخزون'!C:C, MATCH(A2, 'المخزون'!A:A, 0))
+   - وضع علامتي التنصيص المفردة '...' إلزامي لضمان عدم حدوث أي خطأ في إكسيل مع الأسماء العربية والأسماء التي تحتوي على مسافات.
+4. تنفيذ الربط في مصفوفة actions:
+   - ابدأ بإنشاء الورقة الجديدة إذا طلب ورقة جديدة: {"type": "CREATE_SHEET", "sheetName": "اسم_الورقة_الجديدة"}
+   - اكتب صف العناوين: {"type": "SET_VALUES", "sheetName": "اسم_الورقة_الجديدة", "range": "A1:D1", "values": [["كود", "اسم", "المبلغ", "البيان"]]}
+   - اكتب معادلات الربط: {"type": "SET_FORMULAS", "sheetName": "اسم_الورقة_الجديدة", "range": "B2:B10", "formulas": [["=XLOOKUP(A2, 'اسم_الورقة_الأخرى'!A:A, 'اسم_الورقة_الأخرى'!B:B)"], ...]}
+   - نسق الورقة واضبط عرض الأعمدة: {"type": "AUTOFIT_COLUMNS", "sheetName": "اسم_الورقة_الجديدة"}
+   (ملاحظة: يمكنك تضمين خاصية "sheetName" مع أي إجراء لتحديد الورقة المستهدفة بدقة).
 
 أنت تعمل داخل شريط مهام إكسيل جانبي وتتحكم بالشيت مباشرة.
 المستخدم سيطلب منك أمراً، ومع الأمر ستتلقى سياق البيانات المحددة حالياً في الإكسيل.
@@ -125,23 +141,24 @@ ${safeMode ? `
 }
 
 أنواع الإجراءات المتاحة لك في مصفوفة actions:
+(ملاحظة: يمكنك إضافة "sheetName": "اسم_الورقة" مع أي إجراء لتوجيهه إلى ورقة محددة):
 1. كتابة قيم:
-   {"type": "SET_VALUES", "range": "A1:C1", "values": [["اسم", "كمية", "سعر"]]}
+   {"type": "SET_VALUES", "sheetName": "اسم_الورقة", "range": "A1:C1", "values": [["اسم", "كمية", "سعر"]]}
 2. كتابة معادلات:
-   {"type": "SET_FORMULAS", "range": "D2:D10", "formulas": [["=B2*C2"], ["=B3*C3"], ...]}
+   {"type": "SET_FORMULAS", "sheetName": "اسم_الورقة", "range": "D2:D10", "formulas": [["=B2*C2"], ["=B3*C3"], ...]}
 3. تنسيق خلايا:
-   {"type": "FORMAT_RANGE", "range": "A1:E1", "format": {"bold": true, "fillColor": "#107C41", "fontColor": "#FFFFFF", "fontSize": 12, "borders": true, "numberFormat": "@"}}
+   {"type": "FORMAT_RANGE", "sheetName": "اسم_الورقة", "range": "A1:E1", "format": {"bold": true, "fillColor": "#107C41", "fontColor": "#FFFFFF", "fontSize": 12, "borders": true, "numberFormat": "@"}}
    (ألوان التنسيق المالي الموصى بها: رأس الجدول أخضر داكن #107C41 أو أزرق نيلي #1E293B، الخلفية رمادي فاتح جداً #F8FAFC)
    (تنسيقات الأرقام المتاحة في numberFormat: "$#,##0.00", "0.0%", "#,##0", "yyyy-mm-dd", "@")
 4. ضبط عرض الأعمدة تلقائياً:
-   {"type": "AUTOFIT_COLUMNS", "range": "A1:F20"}
+   {"type": "AUTOFIT_COLUMNS", "sheetName": "اسم_الورقة", "range": "A1:F20"}
 5. إنشاء جدول إكسيل تفاعلي:
-   {"type": "CREATE_TABLE", "range": "A1:E10", "tableName": "SalesTable", "hasHeaders": true, "style": "TableStyleMedium2"}
+   {"type": "CREATE_TABLE", "sheetName": "اسم_الورقة", "range": "A1:E10", "tableName": "SalesTable", "hasHeaders": true, "style": "TableStyleMedium2"}
 6. إضافة رسم بياني:
-   {"type": "ADD_CHART", "dataRange": "A1:B10", "chartType": "ColumnClustered", "title": "مقارنة المبيعات", "targetCell": "E2"}
+   {"type": "ADD_CHART", "sheetName": "اسم_الورقة", "dataRange": "A1:B10", "chartType": "ColumnClustered", "title": "مقارنة المبيعات", "targetCell": "E2"}
    (أنواع الرسوم المتاحة: ColumnClustered, Line, Pie, BarClustered)
 7. تجميد الصف العلوي:
-   {"type": "FREEZE_PANES", "rows": 1}
+   {"type": "FREEZE_PANES", "sheetName": "اسم_الورقة", "rows": 1}
 8. إنشاء ورقة عمل جديدة:
    {"type": "CREATE_SHEET", "sheetName": "التقرير المالي"}
 9. نسخ الورقة الحالية بالكامل إلى ورقة جديدة لحماية البيانات الأصلية:
@@ -168,6 +185,20 @@ ${safeMode ? `
         if (hasFormulas) {
           userPromptWithContext += `- المعادلات الموجودة في النطاق:\n${JSON.stringify(contextData.formulas)}\n`;
         }
+      }
+
+      // إضافة خريطة كافة أوراق العمل (Tabs) الموجودة في الملف بالكامل
+      if (contextData.allSheets && Array.isArray(contextData.allSheets) && contextData.allSheets.length > 0) {
+        userPromptWithContext += `\nخريطة جميع أوراق العمل (Tabs) الموجودة في ملف الإكسيل بالكامل:\n`;
+        contextData.allSheets.forEach((s, idx) => {
+          userPromptWithContext += `${idx + 1}. ورقة '${s.name}': النطاق المستخدم [${s.address}] (${s.rowCount} صف)\n`;
+          if (s.headers && s.headers.length > 0) {
+            userPromptWithContext += `   - عناوين الأعمدة المتوفرة: [${s.headers.join(', ')}]\n`;
+          } else {
+            userPromptWithContext += `   - الورقة فارغة حالياً.\n`;
+          }
+        });
+        userPromptWithContext += `\nيمكنك استخدام أسماء هذه الأوراق وأعمدتها الحقيقية مباشرة لكتابة معادلات الربط والمطابقة!\n`;
       }
     }
 

@@ -6,7 +6,7 @@
 const ExcelEngine = {
   
   /**
-   * فحص وقراءة سياق الشيت والخلايا المحددة حالياً
+   * فحص وقراءة سياق الشيت والخلايا المحددة حالياً وكافة أوراق المصنف
    */
   async getContext() {
     return new Promise((resolve, reject) => {
@@ -18,27 +18,82 @@ const ExcelEngine = {
           values: [["المنتج", "الكمية", "السعر"], ["أ", 10, 50], ["ب", 20, 30]],
           formulas: [["", "", ""], ["", "", ""], ["", "", ""]],
           rowCount: 3,
-          columnCount: 3
+          columnCount: 3,
+          allSheets: [
+            { name: "ورقة تجريبية", address: "A1:C5", rowCount: 3, headers: ["المنتج", "الكمية", "السعر"] },
+            { name: "بيانات_العملاء", address: "A1:D20", rowCount: 20, headers: ["كود_العميل", "اسم_العميل", "المدينة", "الرصيد"] }
+          ]
         });
         return;
       }
 
       Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getActiveWorksheet();
+        const activeSheet = context.workbook.worksheets.getActiveWorksheet();
         const selection = context.workbook.getSelectedRange();
+        const worksheets = context.workbook.worksheets;
         
-        sheet.load("name");
+        activeSheet.load("name");
         selection.load(["address", "values", "formulas", "rowCount", "columnCount"]);
+        worksheets.load("items/name");
         
         await context.sync();
-        
+
+        // 1. فحص النطاقات المستخدمة في جميع أوراق المصنف
+        const sheetUsedList = [];
+        for (let i = 0; i < worksheets.items.length; i++) {
+          const ws = worksheets.items[i];
+          const used = ws.getUsedRangeOrNullObject();
+          used.load(["address", "rowCount", "columnCount", "isNullObject"]);
+          sheetUsedList.push({ name: ws.name, usedObj: used });
+        }
+        await context.sync();
+
+        // 2. قراءة صف العناوين الأول لكل شيت يحتوي على بيانات
+        const headersList = [];
+        for (const item of sheetUsedList) {
+          if (!item.usedObj.isNullObject) {
+            const row0 = item.usedObj.getRow(0);
+            row0.load("values");
+            headersList.push({
+              name: item.name,
+              address: item.usedObj.address ? (item.usedObj.address.split("!")[1] || item.usedObj.address) : "A1",
+              rowCount: item.usedObj.rowCount || 0,
+              rowRange: row0
+            });
+          } else {
+            headersList.push({
+              name: item.name,
+              address: "فارغة",
+              rowCount: 0,
+              rowRange: null
+            });
+          }
+        }
+        await context.sync();
+
+        const allSheetsReport = headersList.map(item => {
+          let headers = [];
+          if (item.rowRange && item.rowRange.values && item.rowRange.values[0]) {
+            headers = item.rowRange.values[0]
+              .map(c => (c !== null && c !== undefined) ? String(c).trim() : "")
+              .filter(c => c.length > 0);
+          }
+          return {
+            name: item.name,
+            address: item.address,
+            rowCount: item.rowCount,
+            headers: headers
+          };
+        });
+
         resolve({
-          sheetName: sheet.name,
+          sheetName: activeSheet.name,
           address: selection.address.split("!")[1] || selection.address,
           values: selection.values,
           formulas: selection.formulas,
           rowCount: selection.rowCount,
-          columnCount: selection.columnCount
+          columnCount: selection.columnCount,
+          allSheets: allSheetsReport
         });
       }).catch(err => {
         console.error("خطأ في قراءة سياق الإكسيل:", err);
@@ -128,7 +183,20 @@ const ExcelEngine = {
           case "SET_FORMULAS": {
             if (action.range && action.formulas) {
               const range = targetSheet.getRange(action.range);
-              range.formulas = action.formulas;
+              // التأكد من أن جميع الصيغ تبدأ بعلامة = وإزالة أي مسافات زائدة
+              const cleanFormulas = action.formulas.map(row => {
+                if (Array.isArray(row)) {
+                  return row.map(formula => {
+                    if (typeof formula === "string" && formula.trim() !== "") {
+                      const trimmed = formula.trim();
+                      return trimmed.startsWith("=") ? trimmed : `=${trimmed}`;
+                    }
+                    return formula;
+                  });
+                }
+                return row;
+              });
+              range.formulas = cleanFormulas;
               executedDetails.push(`تطبيق المعادلات في النطاق ${action.range}`);
             }
             break;
