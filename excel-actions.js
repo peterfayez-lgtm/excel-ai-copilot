@@ -66,22 +66,38 @@ const ExcelEngine = {
       let currentActive = context.workbook.worksheets.getActiveWorksheet();
 
       for (const action of actionsList) {
-        // 1. التعامل مع إنشاء أو تفعيل ورقة عمل جديدة بأمان تام
+        // 1. نسخ الورقة الحالية بالكامل في ورقة جديدة (لحماية البيانات الأصلية)
+        if (action.type === "DUPLICATE_SHEET") {
+          const source = currentActive;
+          const copy = source.copy(Excel.WorksheetPositionType.after, source);
+          if (action.newSheetName) {
+            const cleanName = action.newSheetName.replace(/[:\\/?*\[\]]/g, "_").substring(0, 31);
+            copy.name = cleanName;
+          }
+          copy.activate();
+          currentActive = copy;
+          await context.sync();
+          executedDetails.push(`نسخ الورقة الأصلية إلى ورقة جديدة باسم: ${copy.name}`);
+          continue;
+        }
+
+        // 2. إنشاء أو تفعيل ورقة عمل جديدة بأمان تام
         if (action.type === "CREATE_SHEET") {
           if (action.sheetName) {
-            const existingSheet = context.workbook.worksheets.getItemOrNullObject(action.sheetName);
+            const cleanName = action.sheetName.replace(/[:\\/?*\[\]]/g, "_").substring(0, 31);
+            const existingSheet = context.workbook.worksheets.getItemOrNullObject(cleanName);
             await context.sync();
 
             let targetSheet;
             if (existingSheet.isNullObject) {
-              targetSheet = context.workbook.worksheets.add(action.sheetName);
+              targetSheet = context.workbook.worksheets.add(cleanName);
             } else {
               targetSheet = existingSheet;
             }
             targetSheet.activate();
             currentActive = targetSheet;
             await context.sync();
-            executedDetails.push(`إنشاء/تفعيل الورقة: ${action.sheetName}`);
+            executedDetails.push(`إنشاء/تفعيل الورقة: ${cleanName}`);
           }
           continue;
         }

@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentSelection = document.getElementById("currentSelection");
   const btnRefreshContext = document.getElementById("btnRefreshContext");
   const chkIncludeContext = document.getElementById("chkIncludeContext");
+  const chkNewSheetMode = document.getElementById("chkNewSheetMode");
   const statusIndicator = document.getElementById("statusIndicator");
   const statusText = document.getElementById("statusText");
   const actionChips = document.querySelectorAll(".action-chip");
@@ -156,7 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // إرسال الطلب لـ Gemini
       const response = await GeminiService.sendMessage(message, contextData, {
-        persona: personaSelect.value
+        persona: personaSelect.value,
+        safeMode: chkNewSheetMode ? chkNewSheetMode.checked : true
       });
 
       // عرض رد الذكاء الاصطناعي

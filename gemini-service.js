@@ -63,6 +63,7 @@ const GeminiService = {
     if (!model || model.includes("2.") || model.includes("1.")) {
       model = "gemini-3.8-flash";
     }
+    const safeMode = options.safeMode !== false;
     const personaKey = options.persona || "cfo";
     const customInstructions = options.customInstructions || localStorage.getItem("gemini_custom_instructions") || "";
 
@@ -77,6 +78,18 @@ const GeminiService = {
 ${persona.systemPrompt}
 
 ${customInstructions ? `تعليمات إضافية مخصصة من المستخدم:\n${customInstructions}\n` : ""}
+
+${safeMode ? `
+قاعدة ذهبية صارمة (حماية البيانات الأصلية):
+المستخدم يحرص بشدة على سلامة بياناته الأصلية وعدم المساس بها أو التعديل عليها نهائياً لحفظها كأصل غير ممسوس.
+لذلك، ما لم يطلب المستخدم صراحة بنص واضح "عدل على نفس الورقة":
+1. يجب دائماً الحفاظ على الورقة الأصلية كما هي دون تعديل أي خلية فيها.
+2. ابدأ دائماً أول إجراء بإنشاء ورقة عمل جديدة باسم معبر ومميز للعملية، مثلاً: "التحليل_المالي"، "تقرير_المبيعات"، "جدول_الأرباح":
+   {"type": "CREATE_SHEET", "sheetName": "اسم_الورقة"}
+   أو إذا كانت العملية تطويرية لنفس الجدول السابق، يمكنك نسخ الورقة بالكامل:
+   {"type": "DUPLICATE_SHEET", "newSheetName": "نسخة_تحليلية"}
+3. ضع البيانات والنتائج المحسوبة والمعادلات والتنسيقات داخل الورقة الجديدة فقط!
+` : ""}
 
 أنت تعمل داخل شريط مهام إكسيل جانبي وتتحكم بالشيت مباشرة.
 المستخدم سيطلب منك أمراً، ومع الأمر ستتلقى سياق البيانات المحددة حالياً في الإكسيل.
@@ -109,6 +122,8 @@ ${customInstructions ? `تعليمات إضافية مخصصة من المستخ
    {"type": "FREEZE_PANES", "rows": 1}
 8. إنشاء ورقة عمل جديدة:
    {"type": "CREATE_SHEET", "sheetName": "التقرير المالي"}
+9. نسخ الورقة الحالية بالكامل إلى ورقة جديدة لحماية البيانات الأصلية:
+   {"type": "DUPLICATE_SHEET", "newSheetName": "نسخة_تحليلية"}
 
 هام جداً:
 - أعد كائن JSON صالح فقط بدون أي وسوم markdown إضافية مثل \`\`\`json.

@@ -94,11 +94,16 @@
 
     <!-- شريط الإدخال والإرسال (Chat Input) -->
     <footer class="app-footer">
-      <div class="include-context-wrapper">
+      <div class="include-context-wrapper" style="display:flex; flex-direction:column; gap:5px;">
         <label class="checkbox-container">
           <input type="checkbox" id="chkIncludeContext" checked>
           <span class="checkmark"></span>
           قراءة محتوى الخلايا المحددة تلقائياً مع الأمر
+        </label>
+        <label class="checkbox-container" style="color: #107C41; font-weight: 600;">
+          <input type="checkbox" id="chkNewSheetMode" checked>
+          <span class="checkmark"></span>
+          🛡️ تنفيذ العمل في ورقة جديدة (حماية البيانات الأصلية)
         </label>
       </div>
       
@@ -157,8 +162,8 @@
   </div>
 
   <!-- ملفات منطق الإضافة (مع كسر الكاش لضمان التحديث الفوري) -->
-  <script src="excel-actions.js?v=7"></script>
-  <script src="gemini-service.js?v=7"></script>
-  <script src="taskpane.js?v=7"></script>
+  <script src="excel-actions.js?v=9"></script>
+  <script src="gemini-service.js?v=9"></script>
+  <script src="taskpane.js?v=9"></script>
 </body>
 </html>
