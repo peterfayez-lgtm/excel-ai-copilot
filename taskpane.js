@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const chkNewSheetMode = document.getElementById("chkNewSheetMode");
   const statusIndicator = document.getElementById("statusIndicator");
   const statusText = document.getElementById("statusText");
-  const actionChips = document.querySelectorAll(".action-chip");
+  const quickActionSelect = document.getElementById("quickActionSelect");
 
   // عناصر إرفاق ومعاينة المستندات (صور و PDF)
   const btnAttachImage = document.getElementById("btnAttachImage");
@@ -461,15 +461,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // أزرار الإجراءات السريعة (Quick Action Chips)
-  actionChips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      const prompt = chip.getAttribute("data-prompt");
-      userInput.value = prompt;
-      userInput.focus();
-      handleSend();
+  // قائمة الإجراءات السريعة المنسدلة (Quick Actions Dropdown)
+  if (quickActionSelect) {
+    quickActionSelect.addEventListener("change", (e) => {
+      const prompt = e.target.value;
+      if (prompt) {
+        userInput.value = prompt;
+        // إعادة التعيين للخيار الافتراضي ليبقى جاهزاً للاختيار مرة أخرى
+        quickActionSelect.selectedIndex = 0;
+        userInput.focus();
+        handleSend();
+      }
     });
-  });
+  }
 
   // ----------------------------------------------------
   // وظائف مساعدة لعرض الرسائل وتأثيرات الواجهة

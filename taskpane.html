@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- ملف التنسيقات -->
-  <link rel="stylesheet" href="taskpane.css?v=16">
+  <link rel="stylesheet" href="taskpane.css?v=17">
 </head>
 <body>
   <div class="app-container">
@@ -66,17 +66,26 @@
       <button class="refresh-context-btn" id="btnRefreshContext" title="تحديث النطاق المحدد">🔄</button>
     </div>
 
-    <!-- أزرار الإجراءات السريعة (Quick Action Chips) -->
-    <div class="quick-actions-bar">
-      <button class="action-chip chip-highlight" data-prompt="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت</button>
-      <button class="action-chip chip-highlight" data-prompt="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم (Dashboard)</button>
-      <button class="action-chip chip-highlight" data-prompt="🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص.">🔮 التنبؤ بالاتجاهات</button>
-      <button class="action-chip" data-prompt="🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة.">🧩 فحص وشرح المعادلات</button>
-      <button class="action-chip" data-prompt="🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page.">🖨️ تهيئة للطباعة A4</button>
-      <button class="action-chip" data-prompt="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي.">🎨 تنسيق مالي</button>
-      <button class="action-chip" data-prompt="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 رسم بياني</button>
-      <button class="action-chip" data-prompt="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ صف الإجمالي</button>
-      <button class="action-chip" data-prompt="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تنفيذي</button>
+    <!-- قائمة الإجراءات السريعة المنسدلة (Quick Actions Dropdown) -->
+    <div class="quick-actions-section">
+      <label for="quickActionSelect" class="section-label">⚡ الإجراءات والأوامر السريعة المباشرة:</label>
+      <div class="action-dropdown-wrapper">
+        <select id="quickActionSelect" class="action-select">
+          <option value="" disabled selected>⚡ اضغط لاختيار إجراء أو أمر سريع لتنفيذه فوراً...</option>
+          <option value="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت (إصلاح أخطاء الصيغ والتكرار)</option>
+          <option value="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم متكاملة (KPI Dashboard مع بطاقات ورسوم)</option>
+          <option value="🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص.">🔮 التنبؤ بالاتجاهات المستقبلية (AI Forecasting)</option>
+          <option value="🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة.">🧩 فحص وتفكيك وشرح المعادلات</option>
+          <option value="🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page.">🖨️ تهيئة الصفحة للطباعة وتصدير PDF (مقاس A4 أفقي)</option>
+          <option value="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي.">🎨 تنسيق مالي احترافي وتلوين وتنسيق شرطي</option>
+          <option value="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 اقتراح وإنشاء رسم بياني توضيحي ذكي</option>
+          <option value="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ إضافة صف الإجمالي النهائي والمعادلات</option>
+          <option value="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تحليلي تنفيذي للإدارة مع التوصيات</option>
+        </select>
+      </div>
+      <div class="action-badge" id="actionBadge">
+        اختر أي عملية لتنفيذها مباشرة على الشيت دون الحاجة لكتابة نص الأمر.
+      </div>
     </div>
 
     <!-- نافذة المحادثة (Chat Area) -->
@@ -264,8 +273,8 @@
   </div>
 
   <!-- ملفات منطق الإضافة (مع كسر الكاش لضمان التحديث الفوري) -->
-  <script src="excel-actions.js?v=16"></script>
-  <script src="gemini-service.js?v=16"></script>
-  <script src="taskpane.js?v=16"></script>
+  <script src="excel-actions.js?v=17"></script>
+  <script src="gemini-service.js?v=17"></script>
+  <script src="taskpane.js?v=17"></script>
 </body>
 </html>
