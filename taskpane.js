@@ -36,6 +36,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviewName = document.getElementById("imagePreviewName");
   const btnRemoveImage = document.getElementById("btnRemoveImage");
 
+  // عناصر مكتبة القوالب
+  const btnTemplates = document.getElementById("btnTemplates");
+  const templatesModal = document.getElementById("templatesModal");
+  const btnCloseTemplates = document.getElementById("btnCloseTemplates");
+  const newTemplateTitle = document.getElementById("newTemplateTitle");
+  const newTemplatePrompt = document.getElementById("newTemplatePrompt");
+  const btnSaveNewTemplate = document.getElementById("btnSaveNewTemplate");
+  const customTemplatesList = document.getElementById("customTemplatesList");
+
   let attachedImage = null; // { data: string (base64), mimeType: string, dataUrl: string, name: string }
 
   // نصوص توضيحية للشخصيات
@@ -219,6 +228,110 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ----------------------------------------------------
+  // نافذة مكتبة القوالب الجاهزة وسير العمل
+  // ----------------------------------------------------
+  function openTemplates() {
+    loadCustomTemplates();
+    if (templatesModal) templatesModal.style.display = "flex";
+  }
+
+  function closeTemplates() {
+    if (templatesModal) templatesModal.style.display = "none";
+  }
+
+  if (btnTemplates) btnTemplates.addEventListener("click", openTemplates);
+  if (btnCloseTemplates) btnCloseTemplates.addEventListener("click", closeTemplates);
+
+  // تشغيل القوالب الجاهزة بنقرة واحدة
+  document.querySelectorAll(".template-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const prompt = card.getAttribute("data-prompt");
+      if (prompt) {
+        userInput.value = prompt;
+        closeTemplates();
+        userInput.focus();
+        handleSend();
+      }
+    });
+  });
+
+  // إدارة وحفظ القوالب المخصصة للمستخدم
+  function loadCustomTemplates() {
+    if (!customTemplatesList) return;
+    const raw = localStorage.getItem("excel_custom_templates");
+    let templates = [];
+    try {
+      templates = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      templates = [];
+    }
+
+    if (templates.length === 0) {
+      customTemplatesList.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding:6px 0;">لم تقم بحفظ أي قوالب مخصصة بعد. احفظ أوامرك المتكررة بالأسفل لتصل إليها فوراً!</div>`;
+      return;
+    }
+
+    customTemplatesList.innerHTML = "";
+    templates.forEach((t, idx) => {
+      const item = document.createElement("div");
+      item.className = "custom-template-item";
+      
+      const info = document.createElement("div");
+      info.className = "custom-template-item-info";
+      info.innerHTML = `<strong>⭐ ${t.title}</strong><span>${t.prompt.substring(0, 50)}...</span>`;
+      info.addEventListener("click", () => {
+        userInput.value = t.prompt;
+        closeTemplates();
+        userInput.focus();
+        handleSend();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-delete-template";
+      delBtn.innerHTML = "🗑️";
+      delBtn.title = "حذف هذا القالب";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm(`هل تريد حذف قالب "${t.title}"؟`)) {
+          templates.splice(idx, 1);
+          localStorage.setItem("excel_custom_templates", JSON.stringify(templates));
+          loadCustomTemplates();
+        }
+      });
+
+      item.appendChild(info);
+      item.appendChild(delBtn);
+      customTemplatesList.appendChild(item);
+    });
+  }
+
+  if (btnSaveNewTemplate) {
+    btnSaveNewTemplate.addEventListener("click", () => {
+      const title = newTemplateTitle.value.trim();
+      const prompt = newTemplatePrompt.value.trim();
+      if (!title || !prompt) {
+        alert("يرجى إدخال عنوان القالب ونص الأمر!");
+        return;
+      }
+
+      const raw = localStorage.getItem("excel_custom_templates");
+      let templates = [];
+      try {
+        templates = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        templates = [];
+      }
+
+      templates.push({ title, prompt });
+      localStorage.setItem("excel_custom_templates", JSON.stringify(templates));
+      newTemplateTitle.value = "";
+      newTemplatePrompt.value = "";
+      loadCustomTemplates();
+      alert("✅ تم حفظ القالب بنجاح في مكتبتك!");
+    });
+  }
+
+  // ----------------------------------------------------
   // إرسال الرسائل والأوامر
   // ----------------------------------------------------
   async function handleSend() {
@@ -366,6 +479,34 @@ document.addEventListener("DOMContentLoaded", () => {
       content.appendChild(suggestionsBox);
     }
 
+    // إضافة زر نسخ التقرير التنفيذي لردود الوكيل
+    if (sender === "assistant" && text) {
+      const actionsBar = document.createElement("div");
+      actionsBar.className = "message-actions-bar";
+
+      const btnCopy = document.createElement("button");
+      btnCopy.className = "btn-copy-reply";
+      btnCopy.innerHTML = "📋 نسخ التقرير";
+      btnCopy.title = "نسخ نص التقرير للبريد أو الواتساب";
+      btnCopy.addEventListener("click", () => {
+        const cleanText = text.replace(/<[^>]*>/g, "");
+        navigator.clipboard.writeText(cleanText).then(() => {
+          btnCopy.innerHTML = "✅ تم النسخ!";
+          setTimeout(() => {
+            btnCopy.innerHTML = "📋 نسخ التقرير";
+          }, 2000);
+        }).catch(() => {
+          btnCopy.innerHTML = "✅ تم النسخ!";
+          setTimeout(() => {
+            btnCopy.innerHTML = "📋 نسخ التقرير";
+          }, 2000);
+        });
+      });
+
+      actionsBar.appendChild(btnCopy);
+      content.appendChild(actionsBar);
+    }
+
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(content);
     chatContainer.appendChild(messageDiv);
@@ -390,7 +531,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     html += `</div>`;
+
+    // زر التراجع الذكي
+    if (result.canUndo) {
+      html += `
+        <div style="margin-top: 6px;">
+          <button class="btn-undo-action" id="btnUndoAction">↩️ تراجع عن هذه العملية</button>
+        </div>
+      `;
+    }
+
     actionCard.innerHTML = html;
+
+    const undoBtn = actionCard.querySelector("#btnUndoAction");
+    if (undoBtn) {
+      undoBtn.addEventListener("click", async () => {
+        undoBtn.disabled = true;
+        undoBtn.textContent = "جاري التراجع...";
+        try {
+          const undoMsg = await ExcelEngine.undoLastAction();
+          undoBtn.textContent = "✅ تم التراجع بنجاح!";
+          appendMessage(`↩️ **تراجع:** ${undoMsg}`, "assistant");
+          await updateContextDisplay();
+        } catch (err) {
+          alert("تعذر التراجع: " + err.message);
+          undoBtn.textContent = "↩️ تراجع عن هذه العملية";
+          undoBtn.disabled = false;
+        }
+      });
+    }
 
     const lastMessage = chatContainer.querySelector(".assistant-message:last-child .message-content");
     if (lastMessage) {

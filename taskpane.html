@@ -33,6 +33,7 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="btnTemplates" title="مكتبة القوالب وسير العمل الجاهز">⚡</button>
         <button class="icon-btn" id="btnSettings" title="الإعدادات ومفتاح API">⚙️</button>
         <button class="icon-btn" id="btnClearChat" title="مسح المحادثة">🗑️</button>
       </div>
@@ -67,11 +68,12 @@
 
     <!-- أزرار الإجراءات السريعة (Quick Action Chips) -->
     <div class="quick-actions-bar">
-      <button class="action-chip" data-prompt="قم بتنسيق الجدول الحالي بتصميم احترافي مع تمييز العناوين والحدود.">🎨 تنسيق الجدول</button>
-      <button class="action-chip" data-prompt="افحص هذا النطاق بحثاً عن أخطاء الحسابات (#DIV/0!, #VALUE!, #REF!) واقترح الحلول.">🔍 فحص الأخطاء</button>
-      <button class="action-chip" data-prompt="اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 رسم بياني</button>
-      <button class="action-chip" data-prompt="أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ صف الإجمالي</button>
-      <button class="action-chip" data-prompt="حلل هذه الأرقام واكتب لي ملخصاً بأهم 3 ملاحظات وتوصيات.">💡 تلخيص الأرقام</button>
+      <button class="action-chip chip-highlight" data-prompt="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت</button>
+      <button class="action-chip chip-highlight" data-prompt="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم (Dashboard)</button>
+      <button class="action-chip" data-prompt="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود.">🎨 تنسيق مالي</button>
+      <button class="action-chip" data-prompt="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 رسم بياني</button>
+      <button class="action-chip" data-prompt="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ صف الإجمالي</button>
+      <button class="action-chip" data-prompt="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تنفيذي</button>
     </div>
 
     <!-- نافذة المحادثة (Chat Area) -->
@@ -178,11 +180,86 @@
       </div>
     </div>
 
+    <!-- نافذة مكتبة القوالب وسير العمل (Templates Modal) -->
+    <div class="modal-overlay" id="templatesModal" style="display: none;">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3>⚡ مكتبة القوالب الجاهزة وسير العمل</h3>
+          <button class="modal-close-btn" id="btnCloseTemplates">✕</button>
+        </div>
+        <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+          <div class="templates-section">
+            <h4 class="templates-section-title">🌟 قوالب احترافية جاهزة بنقرة واحدة:</h4>
+            <div class="templates-grid">
+              
+              <div class="template-card" data-prompt="💰 صمم جدول إقفال شهري مالي متكامل: مبيعات، مشتريات، احتساب ضريبة القيمة المضافة 14%، وصافي الضريبة المستحقة للسداد مع دوال الجمع والتنسيق المالي القياسي.">
+                <div class="template-card-header">
+                  <span class="template-icon">💰</span>
+                  <strong>الإقفال الشهري وضريبة القيمة المضافة 14%</strong>
+                </div>
+                <p class="template-desc">حساب إجمالي المبيعات والمشتريات والضريبة المستحقة مع التنسيقات المالية.</p>
+              </div>
+
+              <div class="template-card" data-prompt="👥 صمم جدول كشف رواتب الموظفين (Payroll): الراتب الأساسي، البدلات، الحوافز، خصم التأمينات الاجتماعية والضرائب، وصافي الراتب المستحق مع صف الإجمالي ودوال الحساب.">
+                <div class="template-card-header">
+                  <span class="template-icon">👥</span>
+                  <strong>كشف رواتب الموظفين (Payroll)</strong>
+                </div>
+                <p class="template-desc">جدول رواتب متكامل مع التأمينات، البدلات، الحوافز، وصافي الراتب.</p>
+              </div>
+
+              <div class="template-card" data-prompt="📦 أنشئ جدول متابعة المخزون وسلاسل الإمداد: كود الصنف، اسم الصنف، الرصيد الافتتاحي، الوارد، المنصرف، الرصيد الحالي، نقطة إعادة الطلب، مع معادلة التنبيه إذا قل الرصيد.">
+                <div class="template-card-header">
+                  <span class="template-icon">📦</span>
+                  <strong>متابعة المخزون وإعادة الطلب</strong>
+                </div>
+                <p class="template-desc">تتبع حركة الوارد والمنصرف مع تنبيه تلقائي عند بلوغ نقطة إعادة الطلب.</p>
+              </div>
+
+              <div class="template-card" data-prompt="🏦 أنشئ جدول مطابقة الحساب البنكي وتسوية الفروق (Bank Reconciliation) بين رصيد الدفاتر ورصيد كشف البنك مع كشف الشيكات والإيداعات المعلقة.">
+                <div class="template-card-header">
+                  <span class="template-icon">🏦</span>
+                  <strong>تسوية ومطابقة الحساب البنكي</strong>
+                </div>
+                <p class="template-desc">تسوية الفروق بين رصيد الدفاتر ورصيد كشف حساب البنك بدقة محاسبية.</p>
+              </div>
+
+              <div class="template-card" data-prompt="📈 حلل جدول المبيعات واحسب النسبة المئوية لإيراد كل عميل، وصنف العملاء وفق قاعدة باريتو 80/20 إلى فئات (A, B, C) مع رسم بياني توضيحي.">
+                <div class="template-card-header">
+                  <span class="template-icon">📈</span>
+                  <strong>تحليل المبيعات والعملاء (Pareto 80/20)</strong>
+                </div>
+                <p class="template-desc">تصنيف العملاء إلى شرائح (A, B, C) لاستخراج أعلى 20% يحققون 80% من الأرباح.</p>
+              </div>
+
+            </div>
+          </div>
+
+          <hr class="modal-divider">
+
+          <div class="templates-section">
+            <h4 class="templates-section-title">⭐ قوالبك الخاصة المحفوظة:</h4>
+            <div id="customTemplatesList" class="custom-templates-list">
+              <!-- يتم ملؤها ديناميكياً من LocalStorage -->
+            </div>
+
+            <!-- نموذج إضافة قالب مخصص جديد -->
+            <div class="add-custom-template-box">
+              <h5>➕ حفظ أمر جديد في مكتبتك الخاصة:</h5>
+              <input type="text" id="newTemplateTitle" placeholder="عنوان القالب (مثال: كشف عمولات المناديب)" />
+              <textarea id="newTemplatePrompt" rows="2" placeholder="نص الأمر الذي تريد أن ينفذه الوكيل تلقائياً..."></textarea>
+              <button class="btn btn-primary btn-sm" id="btnSaveNewTemplate" style="margin-top: 6px;">💾 حفظ في مكتبة قوالبي</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ملفات منطق الإضافة (مع كسر الكاش لضمان التحديث الفوري) -->
-  <script src="excel-actions.js?v=14"></script>
-  <script src="gemini-service.js?v=14"></script>
-  <script src="taskpane.js?v=14"></script>
+  <script src="excel-actions.js?v=15"></script>
+  <script src="gemini-service.js?v=15"></script>
+  <script src="taskpane.js?v=15"></script>
 </body>
 </html>

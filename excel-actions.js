@@ -116,9 +116,13 @@ const ExcelEngine = {
     }
 
     const executedDetails = [];
+    const createdSheetNames = [];
 
     await Excel.run(async (context) => {
       let currentActive = context.workbook.worksheets.getActiveWorksheet();
+      currentActive.load("name");
+      await context.sync();
+      const initialActiveSheetName = currentActive.name;
 
       for (const action of actionsList) {
         // 1. نسخ الورقة الحالية بالكامل في ورقة جديدة (لحماية البيانات الأصلية)
@@ -128,6 +132,11 @@ const ExcelEngine = {
           if (action.newSheetName) {
             const cleanName = action.newSheetName.replace(/[:\\/?*\[\]]/g, "_").substring(0, 31);
             copy.name = cleanName;
+            createdSheetNames.push(cleanName);
+          } else {
+            copy.load("name");
+            await context.sync();
+            createdSheetNames.push(copy.name);
           }
           copy.activate();
           currentActive = copy;
@@ -146,6 +155,7 @@ const ExcelEngine = {
             let targetSheet;
             if (existingSheet.isNullObject) {
               targetSheet = context.workbook.worksheets.add(cleanName);
+              createdSheetNames.push(cleanName);
             } else {
               targetSheet = existingSheet;
             }
@@ -281,13 +291,81 @@ const ExcelEngine = {
       }
 
       await context.sync();
+
+      if (createdSheetNames.length > 0) {
+        this.lastUndoAction = {
+          type: "CREATED_SHEETS",
+          createdSheetNames: createdSheetNames,
+          previousSheetName: initialActiveSheetName
+        };
+      }
     });
 
     return {
       success: true,
       count: actionsList.length,
-      details: executedDetails
+      details: executedDetails,
+      canUndo: !!this.lastUndoAction
     };
+  },
+
+  // بيانات آخر عملية قابلة للتراجع
+  lastUndoAction: null,
+
+  /**
+   * التراجع عن آخر عملية قام بها الوكيل
+   */
+  async undoLastAction() {
+    if (!this.lastUndoAction) {
+      throw new Error("لا توجد عملية سابقة للتراجع عنها حالياً.");
+    }
+
+    if (typeof Excel === "undefined") {
+      this.lastUndoAction = null;
+      return "تم التراجع في وضع المعاينة.";
+    }
+
+    const undoData = this.lastUndoAction;
+    let message = "";
+
+    await Excel.run(async (context) => {
+      if (undoData.type === "CREATED_SHEETS") {
+        for (const sName of undoData.createdSheetNames) {
+          const sheet = context.workbook.worksheets.getItemOrNullObject(sName);
+          await context.sync();
+          if (!sheet.isNullObject) {
+            sheet.delete();
+          }
+        }
+        if (undoData.previousSheetName) {
+          const prev = context.workbook.worksheets.getItemOrNullObject(undoData.previousSheetName);
+          await context.sync();
+          if (!prev.isNullObject) {
+            prev.activate();
+          }
+        }
+        await context.sync();
+        message = `تم التراجع بنجاح: تم حذف الورقة المنشأة (${undoData.createdSheetNames.join(", ")}) والعودة للورقة السابقة.`;
+      } else if (undoData.type === "RANGE_MODIFICATIONS") {
+        for (const mod of undoData.modifications) {
+          const sheet = context.workbook.worksheets.getItemOrNullObject(mod.sheetName);
+          await context.sync();
+          if (!sheet.isNullObject && mod.range) {
+            const range = sheet.getRange(mod.range);
+            if (mod.hasFormulas && mod.formulas) {
+              range.formulas = mod.formulas;
+            } else if (mod.values) {
+              range.values = mod.values;
+            }
+          }
+        }
+        await context.sync();
+        message = `تم التراجع بنجاح واسترجاع بيانات وقيم الشيت الأصلية قبل التعديل.`;
+      }
+    });
+
+    this.lastUndoAction = null;
+    return message;
   }
 };
 
