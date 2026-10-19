@@ -28,11 +28,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusText = document.getElementById("statusText");
   const actionChips = document.querySelectorAll(".action-chip");
 
-  // عناصر إرفاق ومعاينة الصور
+  // عناصر إرفاق ومعاينة المستندات (صور و PDF)
   const btnAttachImage = document.getElementById("btnAttachImage");
   const imageFileInput = document.getElementById("imageFileInput");
   const imagePreviewContainer = document.getElementById("imagePreviewContainer");
   const imagePreviewImg = document.getElementById("imagePreviewImg");
+  const pdfPreviewBadge = document.getElementById("pdfPreviewBadge");
   const imagePreviewName = document.getElementById("imagePreviewName");
   const btnRemoveImage = document.getElementById("btnRemoveImage");
 
@@ -45,7 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSaveNewTemplate = document.getElementById("btnSaveNewTemplate");
   const customTemplatesList = document.getElementById("customTemplatesList");
 
-  let attachedImage = null; // { data: string (base64), mimeType: string, dataUrl: string, name: string }
+  let attachedFile = null; // { data: string (base64), mimeType: string, dataUrl: string, name: string, isPdf: boolean }
+  let chatHistory = []; // ذاكرة المحادثة التراكمية (Multi-Turn Chat History)
 
   // نصوص توضيحية للشخصيات
   const personaDescriptions = {
@@ -55,33 +57,51 @@ document.addEventListener("DOMContentLoaded", () => {
     executive: "يركز على: السرعة والمرونة، التنسيق الشامل، وصياغة ملخصات الأعمال الأنيقة."
   };
 
-  // وظائف إدارة إرفاق ومعاينة الصور
-  function showImagePreview(file, dataUrl) {
+  // وظائف إدارة إرفاق ومعاينة الملفات (صور أو مستندات PDF)
+  function showFilePreview(file, dataUrl) {
     const base64Data = dataUrl.split(",")[1];
-    const mimeType = file.type || "image/png";
-    const fileName = file.name || "صورة_ملصقة.png";
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const mimeType = isPdf ? "application/pdf" : (file.type || "image/png");
+    const fileName = file.name || (isPdf ? "مستند.pdf" : "صورة_ملصقة.png");
     
-    attachedImage = {
+    attachedFile = {
       data: base64Data,
       mimeType: mimeType,
       dataUrl: dataUrl,
-      name: fileName
+      name: fileName,
+      isPdf: isPdf
     };
 
-    imagePreviewImg.src = dataUrl;
+    if (isPdf) {
+      if (imagePreviewImg) imagePreviewImg.style.display = "none";
+      if (pdfPreviewBadge) pdfPreviewBadge.style.display = "flex";
+    } else {
+      if (pdfPreviewBadge) pdfPreviewBadge.style.display = "none";
+      if (imagePreviewImg) {
+        imagePreviewImg.style.display = "block";
+        imagePreviewImg.src = dataUrl;
+      }
+    }
+
     imagePreviewName.textContent = fileName.length > 25 ? fileName.substring(0, 22) + "..." : fileName;
     imagePreviewContainer.style.display = "flex";
   }
 
-  function clearAttachedImage() {
-    attachedImage = null;
-    imagePreviewImg.src = "";
+  function clearAttachedFile() {
+    attachedFile = null;
+    if (imagePreviewImg) {
+      imagePreviewImg.src = "";
+      imagePreviewImg.style.display = "none";
+    }
+    if (pdfPreviewBadge) {
+      pdfPreviewBadge.style.display = "none";
+    }
     imagePreviewContainer.style.display = "none";
     if (imageFileInput) imageFileInput.value = "";
   }
 
   if (btnRemoveImage) {
-    btnRemoveImage.addEventListener("click", clearAttachedImage);
+    btnRemoveImage.addEventListener("click", clearAttachedFile);
   }
 
   if (btnAttachImage && imageFileInput) {
@@ -93,14 +113,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = e.target.files[0];
       if (!file) return;
 
-      if (!file.type.startsWith("image/")) {
-        alert("يرجى اختيار ملف صورة صالح (PNG, JPG, WEBP, إلخ).");
+      const isImage = file.type.startsWith("image/");
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+      if (!isImage && !isPdf) {
+        alert("يرجى اختيار ملف صورة صالح (PNG, JPG, إلخ) أو مستند PDF.");
         return;
       }
 
       const reader = new FileReader();
       reader.onload = (evt) => {
-        showImagePreview(file, evt.target.result);
+        showFilePreview(file, evt.target.result);
       };
       reader.readAsDataURL(file);
     });
@@ -120,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (file) {
           const reader = new FileReader();
           reader.onload = (evt) => {
-            showImagePreview(file, evt.target.result);
+            showFilePreview(file, evt.target.result);
           };
           reader.readAsDataURL(file);
           break;
@@ -336,16 +359,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   async function handleSend() {
     const text = userInput.value.trim();
-    if (!text && !attachedImage) return;
+    if (!text && !attachedFile) return;
 
-    const currentImage = attachedImage; // احتفاظ بنسخة من الصورة المرفقة إن وجدت
-    const messageToSend = text || "قم بقراءة الجدول الموجود في الصورة المرفقة وإنشائه في الإكسيل بنفس بياناته وتنسيقاته بدقة.";
+    const currentAttachment = attachedFile; // احتفاظ بنسخة من الملف المرفق (صورة أو PDF) إن وجد
+    let messageToSend = text;
+    if (!messageToSend && currentAttachment) {
+      if (currentAttachment.isPdf) {
+        messageToSend = "قم بقراءة واستخراج كافة الجداول والبيانات من مستند الـ PDF المرفق وتفريغها في الإكسيل بنفس التنسيقات والأرقام بدقة.";
+      } else {
+        messageToSend = "قم بقراءة الجدول الموجود في الصورة المرفقة وإنشائه في الإكسيل بنفس بياناته وتنسيقاته بدقة.";
+      }
+    }
 
-    // إضافة رسالة المستخدم للواجهة مع الصورة
-    appendMessage(messageToSend, "user", null, currentImage ? currentImage.dataUrl : null);
+    // إضافة رسالة المستخدم للواجهة مع المرفق
+    appendMessage(messageToSend, "user", null, currentAttachment);
     userInput.value = "";
     userInput.style.height = "auto";
-    clearAttachedImage();
+    clearAttachedFile();
     
     setLoadingState(true);
 
@@ -356,12 +386,31 @@ document.addEventListener("DOMContentLoaded", () => {
         contextData = await ExcelEngine.getContext();
       }
 
-      // إرسال الطلب لـ Gemini مع الصورة وسياق الشيت
+      // إرسال الطلب لـ Gemini مع المرفق وسياق الشيت والذاكرة التراكمية
       const response = await GeminiService.sendMessage(messageToSend, contextData, {
         persona: personaSelect.value,
         safeMode: chkNewSheetMode ? chkNewSheetMode.checked : true,
-        image: currentImage ? { mimeType: currentImage.mimeType, data: currentImage.data } : null
+        chatHistory: chatHistory,
+        attachment: currentAttachment ? {
+          mimeType: currentAttachment.mimeType,
+          data: currentAttachment.data,
+          isPdf: currentAttachment.isPdf
+        } : null
       });
+
+      // حفظ التبادل في ذاكرة المحادثة (Multi-Turn Memory)
+      chatHistory.push({
+        role: "user",
+        parts: [{ text: messageToSend }]
+      });
+      chatHistory.push({
+        role: "model",
+        parts: [{ text: response.reply || "" }]
+      });
+      // الاحتفاظ بآخر 6 أطراف حوار (3 تبادلات) لتوفير الذاكرة والسرعة
+      if (chatHistory.length > 6) {
+        chatHistory = chatHistory.slice(-6);
+      }
 
       // عرض رد الذكاء الاصطناعي
       appendMessage(response.reply, "assistant", response.suggestions);
@@ -397,14 +446,15 @@ document.addEventListener("DOMContentLoaded", () => {
     this.style.height = (this.scrollHeight) + "px";
   });
 
-  // مسح المحادثة
+  // مسح المحادثة وإعادة تعيين الذاكرة
   btnClearChat.addEventListener("click", () => {
-    if (confirm("هل تريد مسح سجل المحادثة الحالي؟")) {
+    if (confirm("هل تريد مسح سجل المحادثة الحالي وإعادة ضبط الذاكرة؟")) {
+      chatHistory = [];
       chatContainer.innerHTML = `
         <div class="message assistant-message welcome-message">
           <div class="message-avatar">🤖</div>
           <div class="message-content">
-            <p>تم مسح المحادثة. أنا جاهز لأوامرك الجديدة على الشيت!</p>
+            <p>تم مسح المحادثة وتفريغ الذاكرة. أنا جاهز لأوامرك الجديدة على الشيت!</p>
           </div>
         </div>
       `;
@@ -424,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   // وظائف مساعدة لعرض الرسائل وتأثيرات الواجهة
   // ----------------------------------------------------
-  function appendMessage(text, sender, suggestions = null, imageUrl = null) {
+  function appendMessage(text, sender, suggestions = null, attachment = null) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}-message`;
 
@@ -435,19 +485,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const content = document.createElement("div");
     content.className = "message-content";
 
-    // عرض الصورة المرفقة إن وجدت في فقاعة الرسالة
-    if (imageUrl) {
-      const img = document.createElement("img");
-      img.src = imageUrl;
-      img.className = "message-image";
-      img.title = "انقر لفتح الصورة بحجم كامل";
-      img.addEventListener("click", () => {
-        const w = window.open("");
-        if (w) {
-          w.document.write(`<img src="${imageUrl}" style="max-width:100%; height:auto;">`);
-        }
-      });
-      content.appendChild(img);
+    // عرض المرفق (صورة أو مستند PDF) إن وجد في فقاعة الرسالة
+    if (attachment) {
+      if (attachment.isPdf) {
+        const pdfBadge = document.createElement("div");
+        pdfBadge.className = "message-pdf-badge";
+        pdfBadge.innerHTML = `<span class="pdf-badge-icon">📕</span><span>مستند PDF مرفق: ${attachment.name || "ملف.pdf"}</span>`;
+        content.appendChild(pdfBadge);
+      } else if (attachment.dataUrl) {
+        const img = document.createElement("img");
+        img.src = attachment.dataUrl;
+        img.className = "message-image";
+        img.title = "انقر لفتح الصورة بحجم كامل";
+        img.addEventListener("click", () => {
+          const w = window.open("");
+          if (w) {
+            w.document.write(`<img src="${attachment.dataUrl}" style="max-width:100%; height:auto;">`);
+          }
+        });
+        content.appendChild(img);
+      }
     }
 
     const textDiv = document.createElement("div");

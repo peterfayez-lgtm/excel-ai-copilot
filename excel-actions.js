@@ -287,6 +287,58 @@ const ExcelEngine = {
             executedDetails.push(`تجميد الصفوف العلوية`);
             break;
           }
+
+          // 8. التنسيق والترميز الشرطي الذكي (Conditional Formatting & Heatmaps)
+          case "ADD_CONDITIONAL_FORMAT": {
+            if (action.range) {
+              const range = targetSheet.getRange(action.range);
+              const formatType = action.formatType || "colorScale";
+
+              if (formatType === "colorScale" || formatType === "heatmap") {
+                const cf = range.conditionalFormats.add(Excel.ConditionalFormatType.colorScale);
+                cf.colorScale.criteria = {
+                  minimum: { formula: null, type: Excel.ConditionalFormatColorCriterionType.lowestValue, color: "#FCA5A5" },
+                  midpoint: { formula: null, type: Excel.ConditionalFormatColorCriterionType.percentile, color: "#FEF08A" },
+                  maximum: { formula: null, type: Excel.ConditionalFormatColorCriterionType.highestValue, color: "#86EFAC" }
+                };
+                executedDetails.push(`تطبيق تدرج لوني حراري (Heatmap) على النطاق ${action.range}`);
+              } else if (formatType === "highlightNegative") {
+                const cf = range.conditionalFormats.add(Excel.ConditionalFormatType.cellValue);
+                cf.cellValue.format.font.color = "#B91C1C";
+                cf.cellValue.format.fill.color = "#FEE2E2";
+                cf.cellValue.rule = { formula1: "0", operator: "LessThan" };
+                executedDetails.push(`تمييز القيم السالبة بالأحمر في النطاق ${action.range}`);
+              } else if (formatType === "dataBars") {
+                const cf = range.conditionalFormats.add(Excel.ConditionalFormatType.dataBar);
+                cf.dataBar.barColor = "#3B82F6";
+                executedDetails.push(`إضافة أشرطة بيانات بصرية في النطاق ${action.range}`);
+              }
+            }
+            break;
+          }
+
+          // 9. تهيئة الصفحة للطباعة والتصدير كـ PDF جاهز (Page Layout Setup)
+          case "SET_PAGE_LAYOUT": {
+            try {
+              const orientation = (action.orientation && action.orientation.toLowerCase() === "portrait") 
+                ? Excel.PageOrientation.portrait 
+                : Excel.PageOrientation.landscape;
+              targetSheet.pageLayout.orientation = orientation;
+              targetSheet.pageLayout.paperSize = Excel.PaperType.a4;
+              targetSheet.pageLayout.zoom = { horizontalFitToPages: 1, verticalFitToPages: 0 };
+              
+              if (action.range) {
+                targetSheet.pageLayout.setPrintArea(action.range);
+              } else {
+                const used = targetSheet.getUsedRange();
+                targetSheet.pageLayout.setPrintArea(used);
+              }
+              executedDetails.push(`تهيئة الصفحة للطباعة (A4 أفقي، ملاءمة العرض في صفحة واحدة)`);
+            } catch (pageErr) {
+              console.warn("تنبيه في إعدادات الطباعة:", pageErr);
+            }
+            break;
+          }
         }
       }
 
