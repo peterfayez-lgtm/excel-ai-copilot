@@ -298,7 +298,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem("gemini_api_key") || "";
-    modelSelect.value = localStorage.getItem("gemini_model") || "gemini-3.8-flash";
+    let savedModel = localStorage.getItem("gemini_model") || "gemini-1.5-flash";
+    if (savedModel === "gemini-3.8-flash") {
+      savedModel = "gemini-1.5-flash";
+      localStorage.setItem("gemini_model", "gemini-1.5-flash");
+    }
+    modelSelect.value = savedModel;
     customInstructions.value = localStorage.getItem("gemini_custom_instructions") || "";
     
     const savedPersona = localStorage.getItem("gemini_persona") || "cfo";

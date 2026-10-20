@@ -89,10 +89,10 @@ const GeminiService = {
    */
   async sendMessage(userMessage, contextData, options = {}) {
     const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
-    let model = options.model || localStorage.getItem("gemini_model") || "gemini-3.8-flash";
-    // استخدام الموديل المعتمد والأحدث من خوادم جوجل
-    if (!model || model.includes("2.") || model.includes("1.")) {
-      model = "gemini-3.8-flash";
+    let model = options.model || localStorage.getItem("gemini_model") || "gemini-1.5-flash";
+    // التحقق من صلاحية الموديل والرجوع لـ gemini-1.5-flash كافتراضي رسمي ومجاني
+    if (!model || model === "gemini-3.8-flash") {
+      model = "gemini-1.5-flash";
     }
     const host = options.host || (contextData && contextData.host) || "excel";
     const safeMode = options.safeMode !== false;
@@ -129,7 +129,7 @@ ${customInstructions ? `تعليمات إضافية مخصصة من المستخ
 5. القوائم النقطية والمرقمة:
    - استخدم INSERT_BULLET_LIST لسرد البنود والشروط والنقاط الهامة لتسهيل القراءة.
 6. كود الماكرو (VBA for Word):
-   - إذا طلب المستخدم كود ماكرو لأتمتة مهمة في Word، اكتب كود VBA داخل كتلة برمجة \`\`\`vba مع شرح خطوات تشغيله في Word (Alt + F11).
+   - إذا طلب المستخدم كود ماكرو لأتمتة مهمة في Word، اكتب كود VBA داخل كتلة برمجة vba نظيفة مع شرح خطوات تشغيله في Word (Alt + F11).
 
 قواعد جسر التبادل والتكامل مع Excel (Word ↔ Excel Bridge):
 - إذا طلب المستخدم استخراج بيانات رقمية أو جداول من مستند Word لنقلها إلى إكسيل: لخص الأرقام والجداول بصيغة مرتبة ومجهزة للنسخ في إكسيل واقترح عليه زر نسخ جدول إكسيل.
@@ -161,7 +161,7 @@ ${customInstructions ? `تعليمات إضافية مخصصة من المستخ
    {"type": "CLEAR_DOCUMENT"}
 
 هام جداً:
-- أعد كائن JSON صالح فقط بدون أي وسوم markdown إضافية مثل \`\`\`json.
+- أعد كائن JSON صالح فقط بدون أي وسوم كود markdown إضافية (لا تضع وسوم كود خارج كائن JSON).
 `;
     } else {
       // توجيهات Excel الشاملة
@@ -307,7 +307,7 @@ ${safeMode ? `
 
 قواعد توليد أكواد الماكرو والأتمتة الذاتية (VBA & Office Script Generator):
 عندما يطلب المستخدم كود ماكرو VBA أو Office Script لأتمتة مهمة معقدة أو متكررة:
-1. اكتب الكود البرمجي كاملاً ونظيفاً وموثقاً باللغة العربية داخل كتلة كود ```vba أو ```typescript في حقل reply.
+1. اكتب الكود البرمجي كاملاً ونظيفاً وموثقاً باللغة العربية داخل كتلة كود vba أو typescript في حقل reply.
 2. اشرح للمستخدم بأسلوب سهل خطوة بخطوة كيفية وضعه في إكسيل (الضغط على Alt + F11 ثم Insert -> Module ولصق الكود، ثم تشغيله بـ F5).
 3. الواجهة ستوفر للمستخدم زر نسخ مباشر بنقرة واحدة فوق الكود.
 
@@ -369,7 +369,7 @@ ${safeMode ? `
    (أو قيود للأرقام الموجبة: "validationType": "decimal", "operator": "GreaterThan", "formula1": "0")
 
 هام جداً:
-- أعد كائن JSON صالح فقط بدون أي وسوم markdown إضافية مثل ```json.
+- أعد كائن JSON صالح فقط بدون أي وسوم كود markdown إضافية (لا تضع وسوم كود خارج كائن JSON).
 - احرص على استخدام عناوين النطاقات الصحيحة بناءً على النطاق المحدد أو ابدأ من A1 إن كان إنشاء جديد.
 `;
     }
@@ -483,7 +483,13 @@ ${safeMode ? `
 
     try {
       // تنظيف النص وتفسير JSON
-      const cleanJson = candidateText.trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
+      let cleanJson = candidateText.trim();
+      cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      const firstBrace = cleanJson.indexOf('{');
+      const lastBrace = cleanJson.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+      }
       return JSON.parse(cleanJson);
     } catch (parseError) {
       console.warn("تعذر قراءة JSON مباشرة، إعادة محاولة الاستخراج:", candidateText);
