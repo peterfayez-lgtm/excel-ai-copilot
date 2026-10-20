@@ -14,91 +14,94 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- ملف التنسيقات -->
-  <link rel="stylesheet" href="taskpane.css?v=21">
+  <link rel="stylesheet" href="taskpane.css?v=23">
 </head>
 <body>
   <div class="app-container">
     
-    <!-- الشريط العلوي (Header) -->
+    <!-- الشريط العلوي الاحترافي (Fluent Office 365 Header) -->
     <header class="app-header">
       <div class="header-left">
         <div class="logo-box">
-          <span class="logo-icon" id="appLogo">⚡</span>
+          <span class="logo-icon" id="appLogo">📊</span>
         </div>
         <div class="header-titles">
-          <h1 id="appTitle">المساعد الذكي (Office AI)</h1>
+          <h1 id="appTitle">مساعد Excel الذكي</h1>
           <span class="status-indicator online" id="statusIndicator">
-            <span class="dot"></span> <span id="statusText">جاهز للعمل</span>
+            <span class="dot"></span> <span id="statusText">متصل وجاهز للعمل</span>
           </span>
         </div>
       </div>
       <div class="header-actions">
         <button class="icon-btn" id="btnExportWord" title="تصدير التحليل الحالي لتقرير Word منسق (.doc)">📄</button>
-        <button class="icon-btn" id="btnTemplates" title="مكتبة القوالب وسير العمل الجاهز">⚡</button>
+        <button class="icon-btn" id="btnTemplates" title="مكتبة القوالب وسير العمل الجاهز">📋</button>
         <button class="icon-btn" id="btnSettings" title="الإعدادات ومفتاح API">⚙️</button>
-        <button class="icon-btn" id="btnClearChat" title="مسح المحادثة">🗑️</button>
+        <button class="icon-btn" id="btnClearChat" title="مسح المحادثة وتفريغ الذاكرة">🗑️</button>
       </div>
     </header>
 
-    <!-- شريط اختيار شخصية ومهنة الوكيل (Persona Selector) -->
-    <div class="persona-section">
-      <label for="personaSelect" class="section-label">مهنة وشخصية الوكيل:</label>
-      <div class="persona-dropdown-wrapper">
-        <select id="personaSelect" class="persona-select">
-          <optgroup label="💼 تخصصات الأعمال والمالية (Excel):" id="excelPersonasGroup">
-            <option value="cfo" selected>💼 خبير مالي ومحاسب محترف (CFO & Modeler)</option>
-            <option value="analyst">📊 محلل بيانات وإحصاء (Data Analyst)</option>
-            <option value="operations">📦 مدير عمليات وسلاسل إمداد (Supply Chain)</option>
-            <option value="executive">⚡ مساعد تنفيذي وإداري شامل (Executive)</option>
-          </optgroup>
-          <optgroup label="📝 تخصصات الوثائق والتقارير (Word):" id="wordPersonasGroup">
-            <option value="writer">📑 كاتب تقارير إدارية واستراتيجية (Executive Writer)</option>
-            <option value="legal">⚖️ مستشار قانوني ومصيغ عقود (Legal Advisor)</option>
-            <option value="editor">✍️ مدقق لغوي ومترجم محترف (Editor & Translator)</option>
-          </optgroup>
-        </select>
-      </div>
-      <div class="persona-badge" id="personaBadge">
-        يركز على: ضبط الحسابات، القوائم المالية، تنسيق العملات، وفحص الميزانيات.
-      </div>
-    </div>
-
-    <!-- شريط فحص النطاق والشيت الحالي (Context Bar) -->
-    <div class="context-bar">
-      <div class="context-info">
-        <span class="context-sheet-icon">📄</span>
+    <!-- شريط فحص النطاق والشخصية المدمج (Fluent Context & Persona Bar) -->
+    <div class="fluent-context-strip">
+      <div class="context-item sheet-info">
+        <span class="context-sheet-icon" id="contextIcon">📄</span>
         <span class="sheet-name" id="currentSheetName">ورقة: ...</span>
         <span class="divider">|</span>
-        <span class="selection-range" id="currentSelection">التحديد: A1</span>
+        <span class="selection-range code-font" id="currentSelection">A1</span>
+        <button class="refresh-context-btn" id="btnRefreshContext" title="تحديث النطاق المحدد">🔄</button>
       </div>
-      <button class="refresh-context-btn" id="btnRefreshContext" title="تحديث النطاق المحدد">🔄</button>
-    </div>
-
-    <!-- قائمة الإجراءات السريعة المنسدلة (Quick Actions Dropdown) -->
-    <div class="quick-actions-section">
-      <label for="quickActionSelect" class="section-label">⚡ الإجراءات والأوامر السريعة المباشرة:</label>
-      <div class="action-dropdown-wrapper">
-        <select id="quickActionSelect" class="action-select">
-          <option value="" disabled selected>⚡ اضغط لاختيار إجراء أو أمر سريع لتنفيذه فوراً...</option>
-          <option value="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت (إصلاح أخطاء الصيغ والتكرار)</option>
-          <option value="⚖️ قم بمطابقة وتسوية الحسابات بين أوراق العمل: طابق كشف الحساب مع الدفاتر الداخلية، وأنشئ ورقة تقرير مطابقة توضح الحركات المتطابقة والفروقات غير المتطابقة مع بطاقات الملخص والتلوين الشرطي.">⚖️ مطابقة وتسوية الحسابات (Bank & Ledger Reconciliation)</option>
-          <option value="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم متكاملة (KPI Dashboard مع بطاقات ورسوم)</option>
-          <option value="📈 ابنِ نموذج محاكاة سيناريوهات وحساسية القرار المالي (What-If Analysis) في ورقة جديدة: ضع خلايا لنسب المتغيرات، وجدول مقارنة متفائل وواقعي ومتشائم مع رسم بياني توضيحي.">📈 محاكاة السيناريوهات المالية (What-If Scenario Modeling)</option>
-          <option value="📋 أنشئ قائمة منسدلة داخل الخلايا (Data Validation) للعمود المحدد لمنع الأخطاء البشرية وتقييد القيم المدخلة بخيارات محددة مسبقاً.">📋 إنشاء قائمة منسدلة داخل الخلايا (In-Cell Data Validation)</option>
-          <option value="📑 صمم نموذج فاتورة مبيعات ضريبية رسمية (Tax Invoice) متكاملة الأركان في ورقة جديدة: جدول البنود، حساب ضريبة القيمة المضافة، وقائمة منسدلة لطريقة الدفع وتهيئتها للطباعة A4 فوراً.">📑 تصميم فاتورة ضريبية رسمية جاهزة للطباعة A4</option>
-          <option value="🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص.">🔮 التنبؤ بالاتجاهات المستقبلية (AI Forecasting)</option>
-          <option value="🧭 قم بفحص شامل للمصنف بالكامل: اقرأ كافة أوراق العمل وقدم تقريراً تشخيصياً لمكامن القوة، وأبرز المخاطر المعلقة، وأهم 3 توصيات إدارية قابلة للتنفيذ.">🧭 فحص وتشخيص شامل للمصنف (Workbook Auto-Audit)</option>
-          <option value="⚡ اكتب لي كود ماكرو VBA نظيف وموثق لأتمتة هذه العملية في إكسيل مع شرح خطوات إضافته في محرر الماكرو (Alt+F11).">⚡ توليد كود ماكرو أتمتة (VBA Macro Generator)</option>
-          <option value="🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة.">🧩 فحص وتفكيك وشرح المعادلات</option>
-          <option value="🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page.">🖨️ تهيئة الصفحة للطباعة وتصدير PDF (مقاس A4 أفقي)</option>
-          <option value="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي.">🎨 تنسيق مالي احترافي وتلوين وتنسيق شرطي</option>
-          <option value="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 اقتراح وإنشاء رسم بياني توضيحي ذكي</option>
-          <option value="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ إضافة صف الإجمالي النهائي والمعادلات</option>
-          <option value="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تحليلي تنفيذي للإدارة مع التوصيات</option>
+      <div class="context-item persona-pill-wrapper">
+        <select id="personaSelect" class="persona-select-pill" title="تغيير شخصية ومهنة الوكيل">
+          <optgroup label="💼 تخصصات الأعمال والمالية (Excel):" id="excelPersonasGroup">
+            <option value="cfo" selected>💼 خبير مالي ومحاسب (CFO)</option>
+            <option value="analyst">📊 محلل بيانات وإحصاء (Analyst)</option>
+            <option value="operations">📦 مدير عمليات وسلاسل إمداد</option>
+            <option value="executive">⚡ مساعد تنفيذي وإداري</option>
+          </optgroup>
+          <optgroup label="📝 تخصصات الوثائق والتقارير (Word):" id="wordPersonasGroup">
+            <option value="writer">📑 كاتب تقارير إدارية (Writer)</option>
+            <option value="legal">⚖️ مستشار ومصيغ عقود (Legal)</option>
+            <option value="editor">✍️ مدقق لغوي ومترجم (Editor)</option>
+          </optgroup>
         </select>
       </div>
-      <div class="action-badge" id="actionBadge">
-        اختر أي عملية لتنفيذها مباشرة على الشيت دون الحاجة لكتابة نص الأمر.
+    </div>
+    <div class="persona-badge-sub" id="personaBadge">
+      يركز على: ضبط الحسابات، القوائم المالية، تنسيق العملات، وفحص الميزانيات بدقة.
+    </div>
+
+    <!-- شبكة الأوامر السريعة الذكية (Fluent Quick Actions Studio) -->
+    <div class="quick-actions-studio" id="quickActionsStudio">
+      <div class="studio-header">
+        <div class="studio-title-box">
+          <span class="studio-icon">⚡</span>
+          <span class="studio-title">أوامر سريعة بنقرة واحدة:</span>
+          <span class="studio-badge" id="actionHostBadge">Excel</span>
+        </div>
+        <button type="button" class="studio-toggle-btn" id="btnToggleAllActions">
+          <span id="toggleAllActionsText">عرض الكل (15)</span>
+          <span id="toggleAllActionsIcon">▾</span>
+        </button>
+      </div>
+
+      <!-- شبكة الكروت الأساسية (Primary Featured 4 Cards) -->
+      <div class="studio-grid" id="studioPrimaryGrid">
+        <!-- يتم ملء أهم 4 كروت برمجياً حسب Excel أو Word -->
+      </div>
+
+      <!-- شبكة الكروت الإضافية القابلة للطي (Expandable Drawer) -->
+      <div class="studio-drawer" id="studioDrawer" style="display: none;">
+        <div class="studio-grid" id="studioSecondaryGrid">
+          <!-- يتم ملء بقية الكروت برمجياً -->
+        </div>
+      </div>
+
+      <!-- عناصر احتياطية لضمان عدم كسر أي دوال قديمة -->
+      <select id="quickActionSelect" style="display:none;"></select>
+      <div id="quickActionDropdown" style="display:none;">
+        <button id="quickActionBtn" type="button"></button>
+        <div id="quickActionMenu"></div>
+        <span id="quickActionLabel"></span>
+        <span id="quickActionIcon"></span>
       </div>
     </div>
 
@@ -121,18 +124,18 @@
       </div>
     </main>
 
-    <!-- شريط الإدخال والإرسال (Chat Input) -->
+    <!-- شريط الإدخال والإرسال (Fluent Omnibar Footer) -->
     <footer class="app-footer">
-      <div class="include-context-wrapper" style="display:flex; flex-direction:column; gap:5px;">
+      <div class="include-context-wrapper">
         <label class="checkbox-container">
           <input type="checkbox" id="chkIncludeContext" checked>
           <span class="checkmark"></span>
-          قراءة محتوى الخلايا المحددة تلقائياً مع الأمر
+          قراءة محتوى الخلايا المحددة تلقائياً
         </label>
-        <label class="checkbox-container" style="color: #107C41; font-weight: 600;">
+        <label class="checkbox-container safe-badge">
           <input type="checkbox" id="chkNewSheetMode" checked>
           <span class="checkmark"></span>
-          🛡️ تنفيذ العمل في ورقة جديدة (حماية البيانات الأصلية)
+          🛡️ ورقة جديدة (حماية الأصل)
         </label>
       </div>
       
@@ -151,24 +154,24 @@
         </div>
       </div>
 
-      <div class="input-row">
-        <input type="file" id="imageFileInput" accept="image/*,application/pdf" style="display: none;">
-        <button type="button" id="btnAttachImage" class="btn-attach" title="إرفاق ملف PDF أو صورة لجدول/فاتورة (أو الصق بـ Ctrl+V)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-          </svg>
-        </button>
+      <div class="omnibar-card">
         <textarea 
           id="userInput" 
           rows="1" 
-          placeholder="اطلب من الوكيل... (يمكنك إرفاق ملف PDF أو صورة أو لصقها بـ Ctrl+V)"
+          placeholder="اطلب أي مهمة، معادلة، أو اسحب جدولاً من PDF..."
         ></textarea>
-        <button id="btnSend" class="btn-send" title="إرسال">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-        </button>
+        <div class="omnibar-bottom-row">
+          <div class="omnibar-tools">
+            <input type="file" id="imageFileInput" accept="image/*,application/pdf" style="display: none;">
+            <button type="button" id="btnAttachImage" class="omnibar-tool-btn" title="إرفاق ملف PDF أو صورة جدول/فاتورة (أو الصق بـ Ctrl+V)">
+              📎 إرفاق مستند
+            </button>
+          </div>
+          <button id="btnSend" class="omnibar-send-btn" title="إرسال الطلب (Enter)">
+            <span>إرسال</span>
+            <span class="send-arrow">↵</span>
+          </button>
+        </div>
       </div>
     </footer>
 
@@ -191,12 +194,20 @@
           </div>
 
           <div class="form-group">
-            <label for="modelSelect">نموذج الذكاء الاصطناعي (مجاني):</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label for="modelSelect" style="margin: 0;">نموذج الذكاء الاصطناعي (مجاني):</label>
+              <button type="button" id="btnDetectModels" class="btn-text-action" title="فحص واكتشاف النماذج المصرحة لمفتاحك تلقائياً">🔄 فحص النماذج</button>
+            </div>
             <select id="modelSelect">
-              <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash (فائق السرعة ومجاني 100%)</option>
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (الأحدث فائق السرعة - مجاني 100%)</option>
               <option value="gemini-2.0-flash">Gemini 2.0 Flash (الجيل الحديث من جوجل)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (تحليل متعمق للحسابات الضخمة)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash (النسخة القياسية)</option>
+              <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (تحليل استراتيجي عميق)</option>
             </select>
+            <div id="modelDetectStatus" style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">
+              ✨ يدعم التبديل الذكي التلقائي لأحدث موديل متاح لمفتاحك فوراً.
+            </div>
           </div>
 
           <div class="form-group">
@@ -289,9 +300,9 @@
   </div>
 
   <!-- ملفات منطق الإضافة (مع كسر الكاش لضمان التحديث الفوري) -->
-  <script src="excel-actions.js?v=21"></script>
-  <script src="word-actions.js?v=21"></script>
-  <script src="gemini-service.js?v=21"></script>
-  <script src="taskpane.js?v=21"></script>
+  <script src="excel-actions.js?v=23"></script>
+  <script src="word-actions.js?v=23"></script>
+  <script src="gemini-service.js?v=23"></script>
+  <script src="taskpane.js?v=23"></script>
 </body>
 </html>

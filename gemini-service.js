@@ -85,14 +85,44 @@ const GeminiService = {
   },
 
   /**
+   * استعلام واستكشاف قائمة النماذج المتاحة فعلياً لمفتاح المستخدم من جوجل AI Studio
+   */
+  async listAvailableModels(apiKey) {
+    if (!apiKey) return [];
+    const versions = ["v1beta", "v1"];
+    for (const ver of versions) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/${ver}/models?key=${apiKey}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.models)) {
+            const valid = data.models
+              .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+              .map(m => ({
+                id: m.name.replace(/^models\//, ''),
+                name: m.displayName || m.name.replace(/^models\//, ''),
+                description: m.description || "",
+                version: ver
+              }));
+            if (valid.length > 0) return valid;
+          }
+        }
+      } catch (e) {
+        console.warn(`خطأ عند جلب النماذج عبر ${ver}:`, e);
+      }
+    }
+    return [];
+  },
+
+  /**
    * إرسال طلب المستخدم وسياق الإكسيل إلى Gemini والحصول على الرد والإجراءات
    */
   async sendMessage(userMessage, contextData, options = {}) {
     const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
-    let model = options.model || localStorage.getItem("gemini_model") || "gemini-1.5-flash";
-    // التحقق من صلاحية الموديل والرجوع لـ gemini-1.5-flash كافتراضي رسمي ومجاني
+    let model = options.model || localStorage.getItem("gemini_model") || "gemini-2.5-flash";
+    // التحقق من صلاحية الموديل والرجوع لـ gemini-2.5-flash كافتراضي رسمي ومجاني
     if (!model || model === "gemini-3.8-flash") {
-      model = "gemini-1.5-flash";
+      model = "gemini-2.5-flash";
     }
     const host = options.host || (contextData && contextData.host) || "excel";
     const safeMode = options.safeMode !== false;
@@ -460,13 +490,96 @@ ${safeMode ? `
       }
     };
 
-    const response = await fetch(endpoint, {
+    let response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(requestBody)
     });
+
+    // آلية المعالجة الذاتية التلقائية في حال عدم توفر الموديل (404 أو خطأ الإصدار)
+    if (!response.ok) {
+      const errClone = response.clone();
+      const errorData = await errClone.json().catch(() => ({}));
+      const errorMsg = errorData.error?.message || "";
+
+      const isModelNotFound = response.status === 404 ||
+        errorMsg.includes("is not found") ||
+        errorMsg.includes("not supported for generateContent");
+
+      if (isModelNotFound) {
+        console.warn(`النموذج ${model} غير مدعوم على المسار الحالي، بدء التبديل الذكي التلقائي...`);
+
+        // 1. أولاً: تجربة إصدار v1 إذا كنا على v1beta، أو العكس
+        const altVersion = endpoint.includes("/v1beta/") ? "v1" : "v1beta";
+        const altEndpoint = `https://generativelanguage.googleapis.com/${altVersion}/models/${model}:generateContent?key=${apiKey}`;
+        let altRes = await fetch(altEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody)
+        }).catch(() => null);
+
+        if (altRes && altRes.ok) {
+          response = altRes;
+        } else {
+          // 2. ثانياً: استعلام ديناميكي من API جوجل لمعرفة النماذج المصرحة لمفتاح المستخدم (ListModels)
+          console.warn("جاري الاستعلام التلقائي من خوادم جوجل عن النماذج المتاحة لمفتاحك...");
+          const availableModels = await this.listAvailableModels(apiKey);
+          if (availableModels && availableModels.length > 0) {
+            // اختيار أفضل نموذج فلاش متاح لمفتاح المستخدم
+            const best = availableModels.find(m => m.id.includes("2.5") && m.id.includes("flash"))
+              || availableModels.find(m => m.id.includes("2.0") && m.id.includes("flash"))
+              || availableModels.find(m => m.id.includes("flash-latest"))
+              || availableModels.find(m => m.id.includes("flash-002"))
+              || availableModels.find(m => m.id.includes("flash"))
+              || availableModels[0];
+
+            if (best && best.id !== model) {
+              console.log(`تم التحويل التلقائي بنجاح إلى: ${best.id} على ${best.version}`);
+              localStorage.setItem("gemini_model", best.id);
+              try {
+                const modelSel = document.getElementById("modelSelect");
+                if (modelSel) modelSel.value = best.id;
+              } catch (e) {}
+
+              const retryUrl = `https://generativelanguage.googleapis.com/${best.version}/models/${best.id}:generateContent?key=${apiKey}`;
+              const retryRes = await fetch(retryUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody)
+              }).catch(() => null);
+
+              if (retryRes && retryRes.ok) {
+                response = retryRes;
+              }
+            }
+          } else {
+            // 3. ثالثاً: قائمة نماذج شائعة بديلة
+            const fallbackCandidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-002", "gemini-1.5-pro"];
+            for (const cand of fallbackCandidates) {
+              if (cand === model) continue;
+              for (const v of ["v1beta", "v1"]) {
+                const candUrl = `https://generativelanguage.googleapis.com/${v}/models/${cand}:generateContent?key=${apiKey}`;
+                const candRes = await fetch(candUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(requestBody)
+                }).catch(() => null);
+
+                if (candRes && candRes.ok) {
+                  console.log(`نجح التبديل الاحتياطي إلى النموذج: ${cand} (${v})`);
+                  localStorage.setItem("gemini_model", cand);
+                  response = candRes;
+                  break;
+                }
+              }
+              if (response.ok) break;
+            }
+          }
+        }
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

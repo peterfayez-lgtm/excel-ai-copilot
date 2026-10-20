@@ -30,6 +30,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusIndicator = document.getElementById("statusIndicator");
   const statusText = document.getElementById("statusText");
   const quickActionSelect = document.getElementById("quickActionSelect");
+  const quickActionDropdown = document.getElementById("quickActionDropdown");
+  const quickActionBtn = document.getElementById("quickActionBtn");
+  const quickActionMenu = document.getElementById("quickActionMenu");
+  const quickActionLabel = document.getElementById("quickActionLabel");
+  const quickActionIcon = document.getElementById("quickActionIcon");
+  const actionHostBadge = document.getElementById("actionHostBadge");
+  const btnDetectModels = document.getElementById("btnDetectModels");
+  const modelDetectStatus = document.getElementById("modelDetectStatus");
+  const studioPrimaryGrid = document.getElementById("studioPrimaryGrid");
+  const studioSecondaryGrid = document.getElementById("studioSecondaryGrid");
+  const studioDrawer = document.getElementById("studioDrawer");
+  const btnToggleAllActions = document.getElementById("btnToggleAllActions");
+  const toggleAllActionsText = document.getElementById("toggleAllActionsText");
+  const toggleAllActionsIcon = document.getElementById("toggleAllActionsIcon");
 
   // عناصر إرفاق ومعاينة المستندات (صور و PDF)
   const btnAttachImage = document.getElementById("btnAttachImage");
@@ -160,42 +174,237 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentHost = "excel"; // البيئة الحالية الافتراضية ("excel" أو "word")
 
-  // دوال تكييف الواجهة بحسب بيئة التشغيل (إكسيل أو وورد)
-  function setWordQuickActions() {
-    if (!quickActionSelect) return;
-    quickActionSelect.innerHTML = `
-      <option value="" disabled selected>⚡ اضغط لاختيار إجراء سريع في Word...</option>
-      <option value="📝 صياغة عقد رسمي محكم الأركان (اتفاقية تقديم خدمات وتوريد) يتضمن التمهيد والتزامات الأطراف وشروط السداد والقوة القاهرة وفض النزاعات.">📝 صياغة عقد رسمي / اتفاقية عمل محكمة</option>
-      <option value="📑 اكتب تقريراً إدارياً واستراتيجياً شاملاً للعرض على الإدارة العليا: ملخص تنفيذي، محاور العمل، مؤشرات الأداء، والتوصيات الاستراتيجية.">📑 كتابة تقرير إداري واستراتيجي للقيادة</option>
-      <option value="🔍 قم بالتدقيق اللغوي والنحوي الشامل للنص المحدد في المستند، وتصحيح الأخطاء وإعادة صياغته بأسلوب عربي فصيح ورصين.">🔍 تدقيق لغوي ونحوي وإعادة صياغة باحترافية</option>
-      <option value="📊 أنشئ جدولاً رسمياً منسقاً بتنسيق شركات أنيق يتضمن العناوين والبيانات المنظمة وحدوداً ناعمة.">📊 إنشاء جدول وورد أنيق بألوان الشركات</option>
-      <option value="💡 لخص لي هذا المستند في نقاط تنفيذية مركزة تبرز القرارات والمهام المطلوبة ومواعيد التنفيذ.">💡 تلخيص المستند واستخراج أهم النقاط</option>
-      <option value="🌐 ترجم النص المحدد إلى لغة الأعمال الاحترافية مع الحفاظ التام على المعنى والمصطلحات المعتمدة.">🌐 ترجمة احترافية للنص المحدد</option>
-      <option value="⚡ استخرج كافة البيانات والأرقام والجداول الموجودة في هذا المستند وجهزها بصيغة مرتبة للنسخ في إكسيل.">⚡ استخراج الجداول وتجهيزها لنقلها إلى Excel</option>
-      <option value="💻 اكتب لي كود ماكرو VBA لأتمتة هذه المهمة المتكررة في Word مع شرح خطوات تشغيله (Alt+F11).">💻 كود ماكرو VBA لأتمتة عمليات Word</option>
+  // مصفوفات الأوامر والإجراءات السريعة المباشرة (Excel و Word)
+  const EXCEL_QUICK_ACTIONS = [
+    {
+      icon: "🔍",
+      title: "تدقيق وتطهير الشيت",
+      desc: "إصلاح أخطاء الصيغ (#DIV/0!, #N/A) وتظليل القيم المكررة وإزالة الفراغات",
+      prompt: "🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام."
+    },
+    {
+      icon: "⚖️",
+      title: "مطابقة وتسوية الحسابات",
+      desc: "تسوية ومطابقة الحسابات وكشوف البنك والفروقات غير المطابقة",
+      prompt: "⚖️ قم بمطابقة وتسوية الحسابات بين أوراق العمل: طابق كشف الحساب مع الدفاتر الداخلية، وأنشئ ورقة تقرير مطابقة توضح الحركات المتطابقة والفروقات غير المتطابقة مع بطاقات الملخص والتلوين الشرطي."
+    },
+    {
+      icon: "📊",
+      title: "لوحة تحكم تفاعلية (KPI Dashboard)",
+      desc: "بطاقات مؤشرات ملونة ورسمين بيانيين جذابين مربوطين بالبيانات",
+      prompt: "📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت."
+    },
+    {
+      icon: "📈",
+      title: "محاكاة السيناريوهات المالية (What-If)",
+      desc: "تحليل حساسية ومقارنة سيناريو متفائل وواقعي ومتشائم مع رسم بياني",
+      prompt: "📈 ابنِ نموذج محاكاة سيناريوهات وحساسية القرار المالي (What-If Analysis) في ورقة جديدة: ضع خلايا لنسب المتغيرات، وجدول مقارنة متفائل وواقعي ومتشائم مع رسم بياني توضيحي."
+    },
+    {
+      icon: "📋",
+      title: "قائمة منسدلة داخل الخلايا (Data Validation)",
+      desc: "إنشاء قيود تحقق وقائمة خيارات بالخلية لمنع الأخطاء البشرية",
+      prompt: "📋 أنشئ قائمة منسدلة داخل الخلايا (Data Validation) للعمود المحدد لمنع الأخطاء البشرية وتقييد القيم المدخلة بخيارات محددة مسبقاً."
+    },
+    {
+      icon: "📑",
+      title: "تصميم فاتورة ضريبية رسمية (A4 جاهزة)",
+      desc: "فاتورة متكاملة مع الضريبة وقائمة طريقة الدفع والتهيئة الفورية للطباعة",
+      prompt: "📑 صمم نموذج فاتورة مبيعات ضريبية رسمية (Tax Invoice) متكاملة الأركان في ورقة جديدة: جدول البنود، حساب ضريبة القيمة المضافة، وقائمة منسدلة لطريقة الدفع وتهيئتها للطباعة A4 فوراً."
+    },
+    {
+      icon: "🔮",
+      title: "التنبؤ بالاتجاهات المستقبلية (AI Forecasting)",
+      desc: "توقع أرقام الفترات القادمة بمعادلات إكسيل مع تظليل صفوف التوقع",
+      prompt: "🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص."
+    },
+    {
+      icon: "🧭",
+      title: "فحص وتشخيص شامل للمصنف (Auto-Audit)",
+      desc: "قراءة كافة التابات وتشخيص نقاط القوة والمخاطر وأهم 3 توصيات",
+      prompt: "🧭 قم بفحص شامل للمصنف بالكامل: اقرأ كافة أوراق العمل وقدم تقريراً تشخيصياً لمكامن القوة، وأبرز المخاطر المعلقة، وأهم 3 توصيات إدارية قابلة للتنفيذ."
+    },
+    {
+      icon: "⚡",
+      title: "توليد كود ماكرو VBA للأتمتة",
+      desc: "كود ماكرو نظيف وموثق مع شرح خطوات وضعه في محرر الماكرو (Alt+F11)",
+      prompt: "⚡ اكتب لي كود ماكرو VBA نظيف وموثق لأتمتة هذه العملية في إكسيل مع شرح خطوات إضافته في محرر الماكرو (Alt+F11)."
+    },
+    {
+      icon: "🧩",
+      title: "شرح وتفكيك وفحص المعادلات",
+      desc: "شرح منطق المعادلات في الخلايا واقتراح بدائل أسرع وأكثر كفاءة",
+      prompt: "🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة."
+    },
+    {
+      icon: "🖨️",
+      title: "تهيئة الصفحة للطباعة وتصدير PDF",
+      desc: "ضبط المقاس على A4 والاتجاه الأفقي Landscape وملاءمة العرض لصفحة واحدة",
+      prompt: "🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page."
+    },
+    {
+      icon: "🎨",
+      title: "تنسيق مالي احترافي وتلوين شرطي",
+      desc: "تنسيق مالي جذاب للعناوين والحدود وتطبيق التدرج الحراري (Heatmap)",
+      prompt: "🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي."
+    },
+    {
+      icon: "📊",
+      title: "اقتراح وإنشاء رسم بياني توضيحي",
+      desc: "رسم بياني ذكي يتناسب بدقة مع سياق وتوزيع أرقامك",
+      prompt: "📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات."
+    },
+    {
+      icon: "➕",
+      title: "إضافة صف الإجمالي النهائي والمعادلات",
+      desc: "دوال SUM و AVERAGE وتنسيق الخط العريض والخلفية المميزة",
+      prompt: "➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة."
+    },
+    {
+      icon: "💡",
+      title: "تقرير تحليلي تنفيذي للإدارة العليا",
+      desc: "تحليل معمق للأرقام وأبرز المؤشرات مع أهم 3 توصيات للقيادة",
+      prompt: "💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة."
+    }
+  ];
+
+  const WORD_QUICK_ACTIONS = [
+    {
+      icon: "📝",
+      title: "صياغة عقد رسمي / اتفاقية عمل محكمة",
+      desc: "عقد متكامل الأركان، التمهيد، التزامات الأطراف، وشروط السداد وفض النزاعات",
+      prompt: "📝 صياغة عقد رسمي محكم الأركان (اتفاقية تقديم خدمات وتوريد) يتضمن التمهيد والتزامات الأطراف وشروط السداد والقوة القاهرة وفض النزاعات."
+    },
+    {
+      icon: "📑",
+      title: "كتابة تقرير إداري واستراتيجي للقيادة",
+      desc: "تقرير شامل: ملخص تنفيذي، محاور العمل، مؤشرات الأداء، والتوصيات",
+      prompt: "📑 اكتب تقريراً إدارياً واستراتيجياً شاملاً للعرض على الإدارة العليا: ملخص تنفيذي، محاور العمل، مؤشرات الأداء، والتوصيات الاستراتيجية."
+    },
+    {
+      icon: "🔍",
+      title: "تدقيق لغوي ونحوي وإعادة صياغة باحترافية",
+      desc: "فحص النص المحدد وتصحيح الأخطاء وإعادة صياغته بأسلوب عربي فصيح ورصين",
+      prompt: "🔍 قم بالتدقيق اللغوي والنحوي الشامل للنص المحدد في المستند، وتصحيح الأخطاء وإعادة صياغته بأسلوب عربي فصيح ورصين."
+    },
+    {
+      icon: "📊",
+      title: "إنشاء جدول وورد أنيق بألوان الشركات",
+      desc: "جدول رسمي منسق بالعناوين والبيانات المنظمة وحدوداً ناعمة في Word",
+      prompt: "📊 أنشئ جدولاً رسمياً منسقاً بتنسيق شركات أنيق يتضمن العناوين والبيانات المنظمة وحدوداً ناعمة."
+    },
+    {
+      icon: "💡",
+      title: "تلخيص المستند واستخراج أهم النقاط",
+      desc: "نقاط تنفيذية مركزة تبرز القرارات والمهام المطلوبة ومواعيد التنفيذ",
+      prompt: "💡 لخص لي هذا المستند في نقاط تنفيذية مركزة تبرز القرارات والمهام المطلوبة ومواعيد التنفيذ."
+    },
+    {
+      icon: "🌐",
+      title: "ترجمة احترافية للنص المحدد",
+      desc: "ترجمة للغة الأعمال الاحترافية مع الحفاظ التام على المصطلحات الدقيقة",
+      prompt: "🌐 ترجم النص المحدد إلى لغة الأعمال الاحترافية مع الحفاظ التام على المعنى والمصطلحات المعتمدة."
+    },
+    {
+      icon: "⚡",
+      title: "استخراج الجداول وتجهيزها لنقلها إلى Excel",
+      desc: "استخراج كافة الأرقام والجداول وتجهيزها لنسخها في شيت إكسيل",
+      prompt: "⚡ استخراج كافة البيانات والأرقام والجداول الموجودة في هذا المستند وجهزها بصيغة مرتبة للنسخ في إكسيل."
+    },
+    {
+      icon: "💻",
+      title: "كود ماكرو VBA لأتمتة عمليات Word",
+      desc: "كود ماكرو لأتمتة مهمة متكررة في وورد مع خطوات تشغيله بـ Alt+F11",
+      prompt: "💻 اكتب لي كود ماكرو VBA لأتمتة هذه المهمة المتكررة في Word مع شرح خطوات تشغيله (Alt+F11)."
+    }
+  ];
+
+  function createActionCard(act) {
+    const card = document.createElement("div");
+    card.className = "studio-card";
+    card.title = act.desc;
+    card.innerHTML = `
+      <span class="studio-card-icon">${act.icon}</span>
+      <div class="studio-card-body">
+        <span class="studio-card-title">${act.title}</span>
+        <span class="studio-card-desc">${act.desc}</span>
+      </div>
     `;
+    card.addEventListener("click", () => {
+      userInput.value = act.prompt;
+      userInput.focus();
+      handleSend();
+    });
+    return card;
   }
 
-  function setExcelQuickActions() {
-    if (!quickActionSelect) return;
-    quickActionSelect.innerHTML = `
-      <option value="" disabled selected>⚡ اضغط لاختيار إجراء أو أمر سريع لتنفيذه فوراً...</option>
-      <option value="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت (إصلاح أخطاء الصيغ والتكرار)</option>
-      <option value="⚖️ قم بمطابقة وتسوية الحسابات بين أوراق العمل: طابق كشف الحساب مع الدفاتر الداخلية، وأنشئ ورقة تقرير مطابقة توضح الحركات المتطابقة والفروقات غير المتطابقة مع بطاقات الملخص والتلوين الشرطي.">⚖️ مطابقة وتسوية الحسابات (Bank & Ledger Reconciliation)</option>
-      <option value="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم متكاملة (KPI Dashboard مع بطاقات ورسوم)</option>
-      <option value="📈 ابنِ نموذج محاكاة سيناريوهات وحساسية القرار المالي (What-If Analysis) في ورقة جديدة: ضع خلايا لنسب المتغيرات، وجدول مقارنة متفائل وواقعي ومتشائم مع رسم بياني توضيحي.">📈 محاكاة السيناريوهات المالية (What-If Scenario Modeling)</option>
-      <option value="📋 أنشئ قائمة منسدلة داخل الخلايا (Data Validation) للعمود المحدد لمنع الأخطاء البشرية وتقييد القيم المدخلة بخيارات محددة مسبقاً.">📋 إنشاء قائمة منسدلة داخل الخلايا (In-Cell Data Validation)</option>
-      <option value="📑 صمم نموذج فاتورة مبيعات ضريبية رسمية (Tax Invoice) متكاملة الأركان في ورقة جديدة: جدول البنود، حساب ضريبة القيمة المضافة، وقائمة منسدلة لطريقة الدفع وتهيئتها للطباعة A4 فوراً.">📑 تصميم فاتورة ضريبية رسمية جاهزة للطباعة A4</option>
-      <option value="🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص.">🔮 التنبؤ بالاتجاهات المستقبلية (AI Forecasting)</option>
-      <option value="🧭 قم بفحص شامل للمصنف بالكامل: اقرأ كافة أوراق العمل وقدم تقريراً تشخيصياً لمكامن القوة، وأبرز المخاطر المعلقة، وأهم 3 توصيات إدارية قابلة للتنفيذ.">🧭 فحص وتشخيص شامل للمصنف (Workbook Auto-Audit)</option>
-      <option value="⚡ اكتب لي كود ماكرو VBA نظيف وموثق لأتمتة هذه العملية في إكسيل مع شرح خطوات إضافته في محرر الماكرو (Alt+F11).">⚡ توليد كود ماكرو أتمتة (VBA Macro Generator)</option>
-      <option value="🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة.">🧩 فحص وتفكيك وشرح المعادلات</option>
-      <option value="🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page.">🖨️ تهيئة الصفحة للطباعة وتصدير PDF (مقاس A4 أفقي)</option>
-      <option value="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي.">🎨 تنسيق مالي احترافي وتلوين وتنسيق شرطي</option>
-      <option value="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 اقتراح وإنشاء رسم بياني توضيحي ذكي</option>
-      <option value="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ إضافة صف الإجمالي النهائي والمعادلات</option>
-      <option value="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تحليلي تنفيذي للإدارة مع التوصيات</option>
-    `;
+  // دالة بناء وتحديث ستوديو الأوامر السريعة المباشرة (Fluent Studio Grid)
+  function renderQuickActions(host) {
+    const actions = host === "word" ? WORD_QUICK_ACTIONS : EXCEL_QUICK_ACTIONS;
+    
+    if (actionHostBadge) {
+      actionHostBadge.textContent = host === "word" ? "Word" : "Excel";
+    }
+
+    // تعبئة الكروت الأساسية الأربعة الأولى
+    if (studioPrimaryGrid) {
+      studioPrimaryGrid.innerHTML = "";
+      actions.slice(0, 4).forEach(act => {
+        studioPrimaryGrid.appendChild(createActionCard(act));
+      });
+    }
+
+    // تعبئة بقية الكروت في الدرج القابل للتوسيع
+    if (studioSecondaryGrid) {
+      studioSecondaryGrid.innerHTML = "";
+      actions.slice(4).forEach(act => {
+        studioSecondaryGrid.appendChild(createActionCard(act));
+      });
+    }
+
+    if (toggleAllActionsText) {
+      toggleAllActionsText.textContent = `عرض الكل (${actions.length})`;
+    }
+
+    // دعم احتياطي لأي استدعاءات قديمة للقائمة
+    if (quickActionMenu) {
+      quickActionMenu.innerHTML = "";
+      actions.forEach(act => {
+        const item = document.createElement("div");
+        item.className = "custom-dropdown-item";
+        item.innerHTML = `
+          <span class="custom-dropdown-item-icon">${act.icon}</span>
+          <div class="custom-dropdown-item-body">
+            <span class="custom-dropdown-item-title">${act.title}</span>
+            <span class="custom-dropdown-item-desc">${act.desc}</span>
+          </div>
+        `;
+        item.addEventListener("click", (e) => {
+          e.stopPropagation();
+          userInput.value = act.prompt;
+          userInput.focus();
+          handleSend();
+        });
+        quickActionMenu.appendChild(item);
+      });
+    }
+  }
+
+  // زر توسيع وطي درج الأوامر الإضافية
+  if (btnToggleAllActions && studioDrawer) {
+    btnToggleAllActions.addEventListener("click", () => {
+      const isClosed = studioDrawer.style.display === "none" || !studioDrawer.style.display;
+      if (isClosed) {
+        studioDrawer.style.display = "block";
+        if (toggleAllActionsText) toggleAllActionsText.textContent = "عرض أقل";
+        if (toggleAllActionsIcon) toggleAllActionsIcon.textContent = "▴";
+      } else {
+        studioDrawer.style.display = "none";
+        const actions = currentHost === "word" ? WORD_QUICK_ACTIONS : EXCEL_QUICK_ACTIONS;
+        if (toggleAllActionsText) toggleAllActionsText.textContent = `عرض الكل (${actions.length})`;
+        if (toggleAllActionsIcon) toggleAllActionsIcon.textContent = "▾";
+      }
+    });
   }
 
   function applyHostAdaptation(host) {
@@ -210,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
         personaSelect.value = "writer";
         personaBadge.textContent = personaDescriptions["writer"];
       }
-      setWordQuickActions();
+      renderQuickActions("word");
     } else {
       if (appLogo) appLogo.textContent = "📊";
       if (appTitle) appTitle.textContent = "المساعد الذكي (Excel AI)";
@@ -221,10 +430,13 @@ document.addEventListener("DOMContentLoaded", () => {
         personaSelect.value = "cfo";
         personaBadge.textContent = personaDescriptions["cfo"];
       }
-      setExcelQuickActions();
+      renderQuickActions("excel");
     }
     updateContextDisplay();
   }
+
+  // التهيئة المبدئية للأوامر السريعة فور تحميل السكريبت
+  renderQuickActions("excel");
 
   // تهيئة مايكروسوفت أوفيس (كشف هل التطبيق إكسيل أم وورد)
   if (typeof Office !== "undefined") {
@@ -298,10 +510,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem("gemini_api_key") || "";
-    let savedModel = localStorage.getItem("gemini_model") || "gemini-1.5-flash";
+    let savedModel = localStorage.getItem("gemini_model") || "gemini-2.5-flash";
     if (savedModel === "gemini-3.8-flash") {
-      savedModel = "gemini-1.5-flash";
-      localStorage.setItem("gemini_model", "gemini-1.5-flash");
+      savedModel = "gemini-2.5-flash";
+      localStorage.setItem("gemini_model", "gemini-2.5-flash");
+    }
+    // التأكد من وجود الخيار بالقائمة المنسدلة
+    const hasOption = Array.from(modelSelect.options).some(o => o.value === savedModel);
+    if (!hasOption) {
+      const newOpt = document.createElement("option");
+      newOpt.value = savedModel;
+      newOpt.textContent = savedModel;
+      modelSelect.appendChild(newOpt);
     }
     modelSelect.value = savedModel;
     customInstructions.value = localStorage.getItem("gemini_custom_instructions") || "";
@@ -316,6 +536,59 @@ document.addEventListener("DOMContentLoaded", () => {
         settingsModal.style.display = "flex";
       }, 600);
     }
+  }
+
+  // زر استكشاف وفحص النماذج المصرحة لمفتاح المستخدم تلقائياً
+  if (btnDetectModels) {
+    btnDetectModels.addEventListener("click", async () => {
+      const key = apiKeyInput.value.trim() || localStorage.getItem("gemini_api_key");
+      if (!key) {
+        alert("يرجى إدخال مفتاح API أولاً لتتمكن من فحص النماذج!");
+        return;
+      }
+      btnDetectModels.disabled = true;
+      btnDetectModels.textContent = "⏳ جاري الفحص...";
+      if (modelDetectStatus) {
+        modelDetectStatus.textContent = "جاري الاتصال بخوادم Google AI Studio للاستعلام عن النماذج...";
+        modelDetectStatus.style.color = "var(--text-secondary)";
+      }
+
+      try {
+        const available = await GeminiService.listAvailableModels(key);
+        if (available && available.length > 0) {
+          modelSelect.innerHTML = "";
+          available.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = `${m.name} (${m.id})`;
+            modelSelect.appendChild(opt);
+          });
+          const best = available.find(m => m.id.includes("2.5") && m.id.includes("flash"))
+            || available.find(m => m.id.includes("2.0") && m.id.includes("flash"))
+            || available.find(m => m.id.includes("flash"))
+            || available[0];
+          if (best) modelSelect.value = best.id;
+
+          if (modelDetectStatus) {
+            modelDetectStatus.innerHTML = `✅ تم اكتشاف <strong>${available.length}</strong> نموذج بنجاح! تم تحديد <strong>${modelSelect.value}</strong> كأفضل خيار.`;
+            modelDetectStatus.style.color = "var(--primary-color)";
+          }
+        } else {
+          if (modelDetectStatus) {
+            modelDetectStatus.textContent = "⚠️ لم يتم استرجاع نماذج مباشرة، ولكن نظام التبديل الذكي سيعمل تلقائياً عند إرسال أي رسالة.";
+            modelDetectStatus.style.color = "var(--warning-color)";
+          }
+        }
+      } catch (err) {
+        if (modelDetectStatus) {
+          modelDetectStatus.textContent = `⚠️ تعذر الاتصال: ${err.message}`;
+          modelDetectStatus.style.color = "var(--danger-color)";
+        }
+      } finally {
+        btnDetectModels.disabled = false;
+        btnDetectModels.textContent = "🔄 فحص النماذج";
+      }
+    });
   }
 
   btnSettings.addEventListener("click", () => {
@@ -558,13 +831,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // قائمة الإجراءات السريعة المنسدلة (Quick Actions Dropdown)
+  // إدارة قائمة الإجراءات السريعة المنسدلة الذكية (Custom Dropdown)
+  if (quickActionBtn && quickActionDropdown) {
+    quickActionBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      quickActionDropdown.classList.toggle("open");
+    });
+
+    // إغلاق القائمة عند النقر خارجها في أي مكان في الصفحة
+    document.addEventListener("click", (e) => {
+      if (!quickActionDropdown.contains(e.target)) {
+        quickActionDropdown.classList.remove("open");
+      }
+    });
+  }
+
+  // دعم التوافقية مع select القديم
   if (quickActionSelect) {
     quickActionSelect.addEventListener("change", (e) => {
       const prompt = e.target.value;
       if (prompt) {
         userInput.value = prompt;
-        // إعادة التعيين للخيار الافتراضي ليبقى جاهزاً للاختيار مرة أخرى
         quickActionSelect.selectedIndex = 0;
         userInput.focus();
         handleSend();
