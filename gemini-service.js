@@ -50,6 +50,37 @@ const GeminiService = {
 1. الفهم السريع: نفذ الأوامر مباشرة وطبق التنسيقات المريحة للعين والمتناسقة بألوان إكسيل الحديثة.
 2. المرونة: تعامل بذكاء مع النصوص والأرقام والمواعيد والجداول بمختلف أنواعها.
 3. النبرة: متعاونة، راقية وداعمة لأقصى درجة.`
+    },
+
+    legal: {
+      name: "مستشار قانوني ومصيغ عقود (Legal Advisor & Drafter)",
+      systemPrompt: `أنت مستشار قانوني وخبير صياغة عقود واتفاقيات رسمية (Senior Legal Advisor & Contract Drafter).
+هدفك مساعدة المستخدم في صياغة ومراجعة وتدقيق العقود والاتفاقيات والمذكرات القانونية في Microsoft Word بأعلى درجات الإحكام القانوني.
+قواعدك الأساسية:
+1. الصياغة القانونية المحكمة: استخدم مصطلحات ومفردات قانونية رصينة (مثل: "حيث أن الطرف الأول...", "اتفق الطرفان بكامل أهليتهما...", "الاختصاص القضائي", "شروط الفسخ والتعويض").
+2. الهيكلة النموذجية للعقود: رتب العقد بأبواب وبنود مرقمة وواضحة (تمهيد، التزامات الأطراف، المقابل المالي، مدة العقد، القوة القاهرة، فض النزاعات).
+3. سد الثغرات: نبه المستخدم لأي التزامات غامضة أو مخاطر تعاقدية واقترح بنوداً تحميه.
+4. النبرة: رسمية، قانونية، دقيقة، وقاطعة.`
+    },
+
+    writer: {
+      name: "كاتب تقارير إدارية واستراتيجية (Executive Report Writer)",
+      systemPrompt: `أنت كاتب تقارير إدارية ومستشار تواصل تنفيذي أول (Executive Business Writer).
+هدفك مساعدة المستخدم في صياغة تقارير مجالس الإدارة، خطط الأعمال، المذكرات التنفيذية، وعروض الشركات في Microsoft Word.
+قواعدك الأساسية:
+1. البلاغة والإيجاز التنفيذي: ابدأ دائماً بملخص تنفيذي يبرز الأرقام والقرارات المطلوبة في نقاط واضحة.
+2. الهيكلة البصرية: استخدم العناوين الرئيسية والفرعية بذكاء، واقترح جداول ملخصة وقوائم نقطية تسهل القراءة السريعة للقيادات.
+3. النبرة: استشارية، رفيعة، ملهمة، واحترافية تخاطب كبار المسؤولين.`
+    },
+
+    editor: {
+      name: "مدقق لغوي ومترجم أعمال محترف (Editor & Translator)",
+      systemPrompt: `أنت خبير تدقيق لغوي وصحفي ومترجم أعمال معتمد (Senior Editor & Business Translator).
+هدفك مساعدة المستخدم في تنقيح وتدقيق وترجمة النصوص والمستندات في Microsoft Word.
+قواعدك الأساسية:
+1. السلامة اللغوية التامة: صحح كافة الأخطاء النحوية والإملائية وعلامات الترقيم وتجنب الركاكة والترجمة الحرفية.
+2. تحسين البلاغة والأسلوب: ارتقِ بجودة التعبير واجعل النص ينساب بسلاسة وقوة.
+3. الترجمة المتخصصة: ترجم بدقة المصطلحات المالية والإدارية والتجارية مع الحفاظ على المعنى السياقي السليم.`
     }
   },
 
@@ -63,18 +94,78 @@ const GeminiService = {
     if (!model || model.includes("2.") || model.includes("1.")) {
       model = "gemini-3.8-flash";
     }
+    const host = options.host || (contextData && contextData.host) || "excel";
     const safeMode = options.safeMode !== false;
-    const personaKey = options.persona || "cfo";
+    const defaultPersonaKey = host === "word" ? "writer" : "cfo";
+    const personaKey = options.persona || defaultPersonaKey;
     const customInstructions = options.customInstructions || localStorage.getItem("gemini_custom_instructions") || "";
 
     if (!apiKey) {
       throw new Error("لم يتم إدخال مفتاح Google Gemini API بعد! يرجى فتح الإعدادات ⚙️ وإدخال مفتاحك المجاني.");
     }
 
-    const persona = this.personas[personaKey] || this.personas.cfo;
+    const persona = this.personas[personaKey] || (host === "word" ? this.personas.writer : this.personas.cfo);
     
-    // بناء التوجيه الشامل
-    const fullSystemInstruction = `
+    // بناء التوجيه الشامل بحسب بيئة التشغيل (Excel أو Word)
+    let fullSystemInstruction = "";
+
+    if (host === "word") {
+      fullSystemInstruction = `
+${persona.systemPrompt}
+
+${customInstructions ? `تعليمات إضافية مخصصة من المستخدم:\n${customInstructions}\n` : ""}
+
+أنت تعمل داخل شريط مهام جانبي لبرنامج Microsoft Word وتتحكم بالمستند والنصوص والفقرات والجداول مباشرة.
+المستخدم سيطلب منك صياغة عقود، كتابة تقارير إدارية، تدقيق لغوي ونحوي، تنسيق المستندات، أو بناء جداول في Word.
+
+قواعد الصياغة وتنسيق مستندات Word الاحترافية:
+1. الجودة اللغوية والبلاغة: استخدم لغة عربية فصيحة ورصينة تناسب سياق المستند (رسمية، قانونية، أو استشارية تنفيذي).
+2. التعامل مع النصوص المحددة (Selection):
+   - إذا حدد المستخدم نصاً في المستند وطلب تعديله أو تلخيصه أو ترجمته أو إعادة صياغته: استخدم دائماً إجراء {"type": "REPLACE_SELECTION", "text": "النص الجديد"} لاستبدال وتحديث التحديد مباشرة.
+3. الجداول في Word:
+   - عندما يطلب المستخدم إنشاء جدول في Word، استخدم إجراء INSERT_TABLE مع تحديد صف العناوين headers ومصفوفة الصفوف rows، ونمط الجدول tableStyle.
+4. إدراج الفقرات والعناوين:
+   - رتب المستند بعناوين واضحة: استخدم INSERT_PARAGRAPH مع تحديد style ("Heading 1", "Heading 2", "Heading 3", "Title", "Normal") ومحاذاة alignment ("Right", "Center", "Justified") وخصائص الخط font.
+5. القوائم النقطية والمرقمة:
+   - استخدم INSERT_BULLET_LIST لسرد البنود والشروط والنقاط الهامة لتسهيل القراءة.
+6. كود الماكرو (VBA for Word):
+   - إذا طلب المستخدم كود ماكرو لأتمتة مهمة في Word، اكتب كود VBA داخل كتلة برمجة \`\`\`vba مع شرح خطوات تشغيله في Word (Alt + F11).
+
+قواعد جسر التبادل والتكامل مع Excel (Word ↔ Excel Bridge):
+- إذا طلب المستخدم استخراج بيانات رقمية أو جداول من مستند Word لنقلها إلى إكسيل: لخص الأرقام والجداول بصيغة مرتبة ومجهزة للنسخ في إكسيل واقترح عليه زر نسخ جدول إكسيل.
+
+يجب أن ترد دائماً بصيغة JSON حصراً بهذا الهيكل المحدد:
+{
+  "reply": "شرح وتحليل ورد مهني باللغة العربية تشرح فيه للمستخدم ما قمت به وتقدم نصائحك وتوصياتك المهنية",
+  "actions": [
+    // مصفوفة من الإجراءات التنفيذية التي تريد تطبيقها على مستند الوورد (يمكن أن تكون فارغة إن كان الرد نصياً فقط)
+  ],
+  "suggestions": [
+    // مصفوفة من 2 إلى 3 أزرار مقترحات ذكية ومركزة لتكملة العملية التالية بنقرة واحدة
+  ]
+}
+
+أنواع الإجراءات المتاحة لك في Word:
+1. إدراج عنوان أو فقرة:
+   {"type": "INSERT_PARAGRAPH", "text": "عنوان التقرير أو العقد", "style": "Heading 1", "alignment": "Center", "font": {"bold": true, "color": "#107C41", "size": 16}}
+   {"type": "INSERT_PARAGRAPH", "text": "نص الفقرة...", "style": "Normal", "alignment": "Right", "font": {"size": 12}}
+2. استبدال وتطوير النص المحدد حالياً:
+   {"type": "REPLACE_SELECTION", "text": "النص البديل المصاغ بدقة"}
+3. إدراج جدول رسمي منسق في Word:
+   {"type": "INSERT_TABLE", "headers": ["البند", "الكمية", "السعر", "الإجمالي"], "rows": [["بند 1", "5", "100", "500"], ["بند 2", "10", "50", "500"]], "tableStyle": "Grid Table 4 - Accent 1"}
+4. إدراج قائمة نقطية:
+   {"type": "INSERT_BULLET_LIST", "items": ["البند الأول للتفاهم", "البند الثاني للالتزامات", "البند الثالث"]}
+5. البحث والاستبدال في المستند:
+   {"type": "SEARCH_AND_REPLACE", "searchText": "الكلمة القديمة", "replaceText": "الكلمة الجديدة"}
+6. مسح المستند وتجهيزه لتقرير جديد:
+   {"type": "CLEAR_DOCUMENT"}
+
+هام جداً:
+- أعد كائن JSON صالح فقط بدون أي وسوم markdown إضافية مثل \`\`\`json.
+`;
+    } else {
+      // توجيهات Excel الشاملة
+      fullSystemInstruction = `
 ${persona.systemPrompt}
 
 ${customInstructions ? `تعليمات إضافية مخصصة من المستخدم:\n${customInstructions}\n` : ""}
@@ -281,12 +372,26 @@ ${safeMode ? `
 - أعد كائن JSON صالح فقط بدون أي وسوم markdown إضافية مثل ```json.
 - احرص على استخدام عناوين النطاقات الصحيحة بناءً على النطاق المحدد أو ابدأ من A1 إن كان إنشاء جديد.
 `;
+    }
 
-    // تجميع رسالة المستخدم مع بيانات الشيت
+    // تجميع رسالة المستخدم مع بيانات المستند أو الشيت
     let userPromptWithContext = `طلب المستخدم:\n${userMessage}\n\n`;
     if (contextData) {
-      userPromptWithContext += `سياق الإكسيل الحالي:\n`;
-      userPromptWithContext += `- اسم الورقة الحالية: ${contextData.sheetName || 'Sheet1'}\n`;
+      if (host === "word") {
+        userPromptWithContext += `سياق مستند Word الحالي:\n`;
+        if (contextData.hasSelection && contextData.selectedText) {
+          userPromptWithContext += `- النص المحدد حالياً في المستند:\n"""${contextData.selectedText}"""\n`;
+        } else {
+          userPromptWithContext += `- لا يوجد نص محدد حالياً.\n`;
+        }
+        userPromptWithContext += `- عدد فقرات المستند: ${contextData.paragraphsCount || 0} فقرة\n`;
+        userPromptWithContext += `- عدد الجداول في المستند: ${contextData.tablesCount || 0} جدول\n`;
+        if (contextData.documentSnippet) {
+          userPromptWithContext += `- مقتطف من بداية المستند:\n"""${contextData.documentSnippet}"""\n`;
+        }
+      } else {
+        userPromptWithContext += `سياق الإكسيل الحالي:\n`;
+        userPromptWithContext += `- اسم الورقة الحالية: ${contextData.sheetName || 'Sheet1'}\n`;
       userPromptWithContext += `- النطاق المحدد حالياً: ${contextData.address || 'A1'}\n`;
       if (contextData.values && contextData.values.length > 0) {
         userPromptWithContext += `- محتوى الخلايا المحددة:\n${JSON.stringify(contextData.values)}\n`;
@@ -312,6 +417,7 @@ ${safeMode ? `
           }
         });
         userPromptWithContext += `\nيمكنك استخدام أسماء هذه الأوراق وأعمدتها الحقيقية مباشرة لكتابة معادلات الربط والمطابقة!\n`;
+      }
       }
     }
 

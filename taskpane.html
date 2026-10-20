@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- ملف التنسيقات -->
-  <link rel="stylesheet" href="taskpane.css?v=18">
+  <link rel="stylesheet" href="taskpane.css?v=19">
 </head>
 <body>
   <div class="app-container">
@@ -23,16 +23,17 @@
     <header class="app-header">
       <div class="header-left">
         <div class="logo-box">
-          <span class="logo-icon">📊</span>
+          <span class="logo-icon" id="appLogo">⚡</span>
         </div>
         <div class="header-titles">
-          <h1>المساعد الذكي للإكسيل</h1>
+          <h1 id="appTitle">المساعد الذكي (Office AI)</h1>
           <span class="status-indicator online" id="statusIndicator">
             <span class="dot"></span> <span id="statusText">جاهز للعمل</span>
           </span>
         </div>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="btnExportWord" title="تصدير التحليل الحالي لتقرير Word منسق (.doc)">📄</button>
         <button class="icon-btn" id="btnTemplates" title="مكتبة القوالب وسير العمل الجاهز">⚡</button>
         <button class="icon-btn" id="btnSettings" title="الإعدادات ومفتاح API">⚙️</button>
         <button class="icon-btn" id="btnClearChat" title="مسح المحادثة">🗑️</button>
@@ -44,10 +45,17 @@
       <label for="personaSelect" class="section-label">مهنة وشخصية الوكيل:</label>
       <div class="persona-dropdown-wrapper">
         <select id="personaSelect" class="persona-select">
-          <option value="cfo" selected>💼 خبير مالي ومحاسب محترف (CFO & Modeler)</option>
-          <option value="analyst">📊 محلل بيانات وإحصاء (Data Analyst)</option>
-          <option value="operations">📦 مدير عمليات وسلاسل إمداد (Supply Chain)</option>
-          <option value="executive">⚡ مساعد تنفيذي وإداري شامل (Executive)</option>
+          <optgroup label="💼 تخصصات الأعمال والمالية (Excel):" id="excelPersonasGroup">
+            <option value="cfo" selected>💼 خبير مالي ومحاسب محترف (CFO & Modeler)</option>
+            <option value="analyst">📊 محلل بيانات وإحصاء (Data Analyst)</option>
+            <option value="operations">📦 مدير عمليات وسلاسل إمداد (Supply Chain)</option>
+            <option value="executive">⚡ مساعد تنفيذي وإداري شامل (Executive)</option>
+          </optgroup>
+          <optgroup label="📝 تخصصات الوثائق والتقارير (Word):" id="wordPersonasGroup">
+            <option value="writer">📑 كاتب تقارير إدارية واستراتيجية (Executive Writer)</option>
+            <option value="legal">⚖️ مستشار قانوني ومصيغ عقود (Legal Advisor)</option>
+            <option value="editor">✍️ مدقق لغوي ومترجم محترف (Editor & Translator)</option>
+          </optgroup>
         </select>
       </div>
       <div class="persona-badge" id="personaBadge">
@@ -279,8 +287,9 @@
   </div>
 
   <!-- ملفات منطق الإضافة (مع كسر الكاش لضمان التحديث الفوري) -->
-  <script src="excel-actions.js?v=18"></script>
-  <script src="gemini-service.js?v=18"></script>
-  <script src="taskpane.js?v=18"></script>
+  <script src="excel-actions.js?v=19"></script>
+  <script src="word-actions.js?v=19"></script>
+  <script src="gemini-service.js?v=19"></script>
+  <script src="taskpane.js?v=19"></script>
 </body>
 </html>

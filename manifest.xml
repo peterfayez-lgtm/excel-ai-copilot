@@ -12,7 +12,7 @@
   <ProviderName>Peter AI</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="AI Copilot (المساعد الذكي)"/>
-  <Description DefaultValue="AI Copilot for Excel - مساعد ذكاء اصطناعي محترف لتنفيذ الأوامر والتحليل المالي وتنسيق الجداول."/>
+  <Description DefaultValue="AI Copilot for Excel &amp; Word - مساعد ذكاء اصطناعي محترف لتنفيذ الأوامر والتحليل المالي وتنسيق الجداول وصياغة المستندات والعقود."/>
   
   <IconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://peterfayez-lgtm.github.io/excel-ai-copilot/assets/icon-80.png"/>
@@ -20,6 +20,7 @@
   
   <Hosts>
     <Host Name="Workbook"/>
+    <Host Name="Document"/>
   </Hosts>
   
   <DefaultSettings>
@@ -64,6 +65,40 @@
           </ExtensionPoint>
         </DesktopFormFactor>
       </Host>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <!-- إضافة الزر في شريط Home الرئيسي في Word -->
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="PeterAiCopilotGroupWord">
+                <Label resid="GroupLabel"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon16"/>
+                  <bt:Image size="32" resid="Icon32"/>
+                  <bt:Image size="80" resid="Icon80"/>
+                </Icon>
+                
+                <Control xsi:type="Button" id="OpenCopilotWordButton">
+                  <Label resid="ButtonLabel"/>
+                  <Supertip>
+                    <Title resid="ButtonTitle"/>
+                    <Description resid="ButtonDescWord"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon16"/>
+                    <bt:Image size="32" resid="Icon32"/>
+                    <bt:Image size="80" resid="Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>PeterAiCopilotWordTaskpane</TaskpaneId>
+                    <SourceLocation resid="TaskpaneUrl"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
     </Hosts>
     
     <Resources>
@@ -82,6 +117,7 @@
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ButtonDesc" DefaultValue="فتح المساعد الذكي للتحدث مع الذكاء الاصطناعي وتنفيذ الأوامر على الشيت."/>
+        <bt:String id="ButtonDescWord" DefaultValue="فتح المساعد الذكي لصياغة العقود وتنسيق المستندات والتقارير التنفيذية في وورد."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

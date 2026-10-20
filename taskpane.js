@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const modelSelect = document.getElementById("modelSelect");
   const customInstructions = document.getElementById("customInstructions");
+  const appLogo = document.getElementById("appLogo");
+  const appTitle = document.getElementById("appTitle");
+  const btnExportWord = document.getElementById("btnExportWord");
   const personaSelect = document.getElementById("personaSelect");
   const personaBadge = document.getElementById("personaBadge");
   const currentSheetName = document.getElementById("currentSheetName");
@@ -49,12 +52,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let attachedFile = null; // { data: string (base64), mimeType: string, dataUrl: string, name: string, isPdf: boolean }
   let chatHistory = []; // ذاكرة المحادثة التراكمية (Multi-Turn Chat History)
 
-  // نصوص توضيحية للشخصيات
+  // نصوص توضيحية للشخصيات (Excel & Word)
   const personaDescriptions = {
     cfo: "يركز على: ضبط الحسابات، القوائم المالية، تنسيق العملات، وفحص الميزانيات بدقة محاسبية.",
     analyst: "يركز على: استخراج المؤشرات، الرسوم البيانية الإحصائية، وتحليل الاتجاهات والأنماط.",
     operations: "يركز على: تتبع الكميات، المهل الزمنية، مستويات المخزون، والتنبيهات اللونية.",
-    executive: "يركز على: السرعة والمرونة، التنسيق الشامل، وصياغة ملخصات الأعمال الأنيقة."
+    executive: "يركز على: السرعة والمرونة، التنسيق الشامل، وصياغة ملخصات الأعمال الأنيقة.",
+    writer: "يركز على: كتابة التقارير الإدارية، خطط الأعمال، والمذكرات التنفيذية للقيادات.",
+    legal: "يركز على: صياغة العقود المحكمة، الشروط والالتزامات، والبنود القانونية الرصينة.",
+    editor: "يركز على: السلامة اللغوية، تدقيق النحو وعلامات الترقيم، والترجمة الاحترافية للأعمال."
   };
 
   // وظائف إدارة إرفاق ومعاينة الملفات (صور أو مستندات PDF)
@@ -152,14 +158,87 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // تهيئة مايكروسوفت أوفيس
+  let currentHost = "excel"; // البيئة الحالية الافتراضية ("excel" أو "word")
+
+  // دوال تكييف الواجهة بحسب بيئة التشغيل (إكسيل أو وورد)
+  function setWordQuickActions() {
+    if (!quickActionSelect) return;
+    quickActionSelect.innerHTML = `
+      <option value="" disabled selected>⚡ اضغط لاختيار إجراء سريع في Word...</option>
+      <option value="📝 صياغة عقد رسمي محكم الأركان (اتفاقية تقديم خدمات وتوريد) يتضمن التمهيد والتزامات الأطراف وشروط السداد والقوة القاهرة وفض النزاعات.">📝 صياغة عقد رسمي / اتفاقية عمل محكمة</option>
+      <option value="📑 اكتب تقريراً إدارياً واستراتيجياً شاملاً للعرض على الإدارة العليا: ملخص تنفيذي، محاور العمل، مؤشرات الأداء، والتوصيات الاستراتيجية.">📑 كتابة تقرير إداري واستراتيجي للقيادة</option>
+      <option value="🔍 قم بالتدقيق اللغوي والنحوي الشامل للنص المحدد في المستند، وتصحيح الأخطاء وإعادة صياغته بأسلوب عربي فصيح ورصين.">🔍 تدقيق لغوي ونحوي وإعادة صياغة باحترافية</option>
+      <option value="📊 أنشئ جدولاً رسمياً منسقاً بتنسيق شركات أنيق يتضمن العناوين والبيانات المنظمة وحدوداً ناعمة.">📊 إنشاء جدول وورد أنيق بألوان الشركات</option>
+      <option value="💡 لخص لي هذا المستند في نقاط تنفيذية مركزة تبرز القرارات والمهام المطلوبة ومواعيد التنفيذ.">💡 تلخيص المستند واستخراج أهم النقاط</option>
+      <option value="🌐 ترجم النص المحدد إلى لغة الأعمال الاحترافية مع الحفاظ التام على المعنى والمصطلحات المعتمدة.">🌐 ترجمة احترافية للنص المحدد</option>
+      <option value="⚡ استخرج كافة البيانات والأرقام والجداول الموجودة في هذا المستند وجهزها بصيغة مرتبة للنسخ في إكسيل.">⚡ استخراج الجداول وتجهيزها لنقلها إلى Excel</option>
+      <option value="💻 اكتب لي كود ماكرو VBA لأتمتة هذه المهمة المتكررة في Word مع شرح خطوات تشغيله (Alt+F11).">💻 كود ماكرو VBA لأتمتة عمليات Word</option>
+    `;
+  }
+
+  function setExcelQuickActions() {
+    if (!quickActionSelect) return;
+    quickActionSelect.innerHTML = `
+      <option value="" disabled selected>⚡ اضغط لاختيار إجراء أو أمر سريع لتنفيذه فوراً...</option>
+      <option value="🔍 قم بتدقيق وتطهير البيانات في الشيت: فحص أخطاء المعادلات (#DIV/0!, #N/A, #VALUE!) وتصحيحها بـ IFERROR، وتظليل القيم المكررة، وتنظيف المسافات الزائدة وإصلاح تنسيقات الأرقام.">🔍 تدقيق وتطهير الشيت (إصلاح أخطاء الصيغ والتكرار)</option>
+      <option value="⚖️ قم بمطابقة وتسوية الحسابات بين أوراق العمل: طابق كشف الحساب مع الدفاتر الداخلية، وأنشئ ورقة تقرير مطابقة توضح الحركات المتطابقة والفروقات غير المتطابقة مع بطاقات الملخص والتلوين الشرطي.">⚖️ مطابقة وتسوية الحسابات (Bank & Ledger Reconciliation)</option>
+      <option value="📊 أنشئ لوحة تحكم إدارية (KPI Dashboard) متكاملة في ورقة جديدة: ضع بطاقات ملونة للمؤشرات الرئيسية، ورسمين بيانيين جذابين مربوطين ببيانات الشيت.">📊 لوحة تحكم متكاملة (KPI Dashboard مع بطاقات ورسوم)</option>
+      <option value="📈 ابنِ نموذج محاكاة سيناريوهات وحساسية القرار المالي (What-If Analysis) في ورقة جديدة: ضع خلايا لنسب المتغيرات، وجدول مقارنة متفائل وواقعي ومتشائم مع رسم بياني توضيحي.">📈 محاكاة السيناريوهات المالية (What-If Scenario Modeling)</option>
+      <option value="📋 أنشئ قائمة منسدلة داخل الخلايا (Data Validation) للعمود المحدد لمنع الأخطاء البشرية وتقييد القيم المدخلة بخيارات محددة مسبقاً.">📋 إنشاء قائمة منسدلة داخل الخلايا (In-Cell Data Validation)</option>
+      <option value="📑 صمم نموذج فاتورة مبيعات ضريبية رسمية (Tax Invoice) متكاملة الأركان في ورقة جديدة: جدول البنود، حساب ضريبة القيمة المضافة، وقائمة منسدلة لطريقة الدفع وتهيئتها للطباعة A4 فوراً.">📑 تصميم فاتورة ضريبية رسمية جاهزة للطباعة A4</option>
+      <option value="🔮 حلل الاتجاه الزمني وتوقع أرقام الفترات القادمة (Forecasting) باستخدام معادلات الإكسيل مع تمييز صفوف التوقع بلون مخصص.">🔮 التنبؤ بالاتجاهات المستقبلية (AI Forecasting)</option>
+      <option value="🧭 قم بفحص شامل للمصنف بالكامل: اقرأ كافة أوراق العمل وقدم تقريراً تشخيصياً لمكامن القوة، وأبرز المخاطر المعلقة، وأهم 3 توصيات إدارية قابلة للتنفيذ.">🧭 فحص وتشخيص شامل للمصنف (Workbook Auto-Audit)</option>
+      <option value="⚡ اكتب لي كود ماكرو VBA نظيف وموثق لأتمتة هذه العملية في إكسيل مع شرح خطوات إضافته في محرر الماكرو (Alt+F11).">⚡ توليد كود ماكرو أتمتة (VBA Macro Generator)</option>
+      <option value="🧩 فكك واشرح المعادلات الموجودة في الخلايا المحددة بالتفصيل، وافحص هل بها أخطاء أو بطء واقترح بدائل عصرية وأكثر كفاءة.">🧩 فحص وتفكيك وشرح المعادلات</option>
+      <option value="🖨️ جهز هذا الشيت للطباعة والتصدير كـ PDF: اضبط المقاس على A4 والاتجاه الأفقي Landscape واجعل العرض ملائم لصفحة واحدة fit-to-1-page.">🖨️ تهيئة الصفحة للطباعة وتصدير PDF (مقاس A4 أفقي)</option>
+      <option value="🎨 قم بتنسيق الجدول الحالي بتصميم مالي احترافي مع تمييز العناوين والألوان والحدود والتنسيق الشرطي.">🎨 تنسيق مالي احترافي وتلوين وتنسيق شرطي</option>
+      <option value="📈 اقترح وأنشئ رسماً بيانياً مناسباً جداً لهذه البيانات.">📈 اقتراح وإنشاء رسم بياني توضيحي ذكي</option>
+      <option value="➕ أضف صف إجمالي نهائي في الأسفل مع دوال المجموع أو المتوسط المناسبة.">➕ إضافة صف الإجمالي النهائي والمعادلات</option>
+      <option value="💡 اكتب لي تقريراً تحليلياً تنفيذياً مفصلاً يفسر هذه الأرقام مع أهم 3 توصيات للإدارة.">💡 تقرير تحليلي تنفيذي للإدارة مع التوصيات</option>
+    `;
+  }
+
+  function applyHostAdaptation(host) {
+    currentHost = host;
+    if (host === "word") {
+      if (appLogo) appLogo.textContent = "📝";
+      if (appTitle) appTitle.textContent = "المساعد الذكي (Word AI)";
+      if (btnExportWord) btnExportWord.title = "استخراج الجداول ونقلها لإكسيل";
+      
+      const currentPersona = personaSelect.value;
+      if (!["writer", "legal", "editor"].includes(currentPersona)) {
+        personaSelect.value = "writer";
+        personaBadge.textContent = personaDescriptions["writer"];
+      }
+      setWordQuickActions();
+    } else {
+      if (appLogo) appLogo.textContent = "📊";
+      if (appTitle) appTitle.textContent = "المساعد الذكي (Excel AI)";
+      if (btnExportWord) btnExportWord.title = "تصدير التحليل الحالي لتقرير Word منسق (.doc)";
+      
+      const currentPersona = personaSelect.value;
+      if (!["cfo", "analyst", "operations", "executive"].includes(currentPersona)) {
+        personaSelect.value = "cfo";
+        personaBadge.textContent = personaDescriptions["cfo"];
+      }
+      setExcelQuickActions();
+    }
+    updateContextDisplay();
+  }
+
+  // تهيئة مايكروسوفت أوفيس (كشف هل التطبيق إكسيل أم وورد)
   if (typeof Office !== "undefined") {
     Office.onReady((info) => {
-      if (info.host === Office.HostType.Excel) {
+      if (info.host === Office.HostType.Word) {
+        console.log("تم الاتصال ببرنامج وورد بنجاح!");
+        applyHostAdaptation("word");
+        Office.context.document.addHandlerAsync(
+          Office.EventType.DocumentSelectionChanged,
+          updateContextDisplay
+        );
+      } else {
         console.log("تم الاتصال ببرنامج إكسيل بنجاح!");
-        updateContextDisplay();
-        
-        // الاستماع لتغيير تحديد الخلايا لتحديث الشريط فورياً
+        applyHostAdaptation("excel");
         Office.context.document.addHandlerAsync(
           Office.EventType.DocumentSelectionChanged,
           updateContextDisplay
@@ -172,14 +251,24 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSettings();
 
   // ----------------------------------------------------
-  // تحديث سياق الشيت والتحديد
+  // تحديث سياق الشيت أو المستند
   // ----------------------------------------------------
   async function updateContextDisplay() {
     try {
-      const ctx = await ExcelEngine.getContext();
-      if (ctx) {
-        currentSheetName.textContent = `ورقة: ${ctx.sheetName}`;
-        currentSelection.textContent = `التحديد: ${ctx.address}`;
+      if (currentHost === "word") {
+        const ctx = await WordEngine.getContext();
+        if (ctx) {
+          currentSheetName.textContent = `مستند: نشط`;
+          currentSelection.textContent = ctx.hasSelection 
+            ? `محدد: "${ctx.selectedText.substring(0, 18)}..."` 
+            : `المستند (${ctx.paragraphsCount} فقرة)`;
+        }
+      } else {
+        const ctx = await ExcelEngine.getContext();
+        if (ctx) {
+          currentSheetName.textContent = `ورقة: ${ctx.sheetName}`;
+          currentSelection.textContent = `التحديد: ${ctx.address}`;
+        }
       }
     } catch (err) {
       console.error("فشل تحديث السياق:", err);
@@ -380,14 +469,15 @@ document.addEventListener("DOMContentLoaded", () => {
     setLoadingState(true);
 
     try {
-      // جلب بيانات الشيت إذا كان الخيار مفعلاً
+      // جلب بيانات الشيت أو المستند إذا كان الخيار مفعلاً
       let contextData = null;
       if (chkIncludeContext.checked) {
-        contextData = await ExcelEngine.getContext();
+        contextData = currentHost === "word" ? await WordEngine.getContext() : await ExcelEngine.getContext();
       }
 
-      // إرسال الطلب لـ Gemini مع المرفق وسياق الشيت والذاكرة التراكمية
+      // إرسال الطلب لـ Gemini مع المرفق وسياق المستند/الشيت والذاكرة التراكمية
       const response = await GeminiService.sendMessage(messageToSend, contextData, {
+        host: currentHost,
         persona: personaSelect.value,
         safeMode: chkNewSheetMode ? chkNewSheetMode.checked : true,
         chatHistory: chatHistory,
@@ -415,9 +505,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // عرض رد الذكاء الاصطناعي
       appendMessage(response.reply, "assistant", response.suggestions);
 
-      // تنفيذ الأوامر على الشيت فورياً إن وجدت
+      // تنفيذ الأوامر على الشيت أو المستند فورياً إن وجدت
       if (response.actions && response.actions.length > 0) {
-        const executionResult = await ExcelEngine.executeActions(response.actions);
+        const executionResult = currentHost === "word"
+          ? await WordEngine.executeActions(response.actions)
+          : await ExcelEngine.executeActions(response.actions);
         renderActionResults(executionResult);
         await updateContextDisplay();
       }
@@ -471,6 +563,40 @@ document.addEventListener("DOMContentLoaded", () => {
         quickActionSelect.selectedIndex = 0;
         userInput.focus();
         handleSend();
+      }
+    });
+  }
+
+  // زر تصدير التقرير لوورد أو استخراج الجداول لإكسيل
+  if (btnExportWord) {
+    btnExportWord.addEventListener("click", async () => {
+      if (currentHost === "word") {
+        userInput.value = "قم باستخراج كافة الجداول والبيانات الرقمية من هذا المستند وتجهيزها بصيغة مرتبة لنقلها إلى إكسيل.";
+        userInput.focus();
+        handleSend();
+      } else {
+        try {
+          const ctx = await ExcelEngine.getContext();
+          let tableHeaders = [];
+          let tableRows = [];
+          if (ctx && ctx.values && ctx.values.length > 0) {
+            tableHeaders = ctx.values[0] || [];
+            tableRows = ctx.values.slice(1) || [];
+          }
+
+          const lastReply = chatContainer.querySelector(".assistant-message:last-child .message-content");
+          const summaryText = lastReply ? lastReply.innerText.substring(0, 500) : "تقرير تحليلي تم استخراجه من مصنف إكسيل.";
+
+          WordEngine.exportExcelToWordDocument(
+            `تقرير_${ctx ? ctx.sheetName : 'التحليل_المالي'}`,
+            summaryText,
+            tableHeaders,
+            tableRows
+          );
+          appendMessage("📄 **تم تصدير تقرير Word منسق بنجاح!** تم تجهيز المستند وتحميله لتفتحه مباشرة في Microsoft Word.", "assistant");
+        } catch (e) {
+          alert("حدث خطأ أثناء تصدير ملف وورد: " + e.message);
+        }
       }
     });
   }
@@ -531,8 +657,12 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.textContent = sugText;
         btn.title = "اضغط للمتابعة والتنفيذ الفوري";
         btn.addEventListener("click", () => {
-          userInput.value = sugText;
-          handleSend();
+          if ((sugText.includes("Word") || sugText.includes("وورد")) && sugText.includes("تصدير") && currentHost === "excel") {
+            if (btnExportWord) btnExportWord.click();
+          } else {
+            userInput.value = sugText;
+            handleSend();
+          }
         });
         suggestionsBox.appendChild(btn);
       });
