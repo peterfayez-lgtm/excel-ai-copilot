@@ -282,21 +282,21 @@ body {
 }
 
 .studio-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .studio-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 9px;
+  border-radius: 8px;
+  padding: 6px 10px;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 9px;
   text-align: right;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
@@ -304,8 +304,8 @@ body {
 .studio-card:hover {
   border-color: #107C41;
   background: #f0fdf4;
-  transform: translateY(-1.5px);
-  box-shadow: 0 3px 8px rgba(16, 124, 65, 0.12);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 124, 65, 0.1);
 }
 
 .studio-card:active {
@@ -314,19 +314,21 @@ body {
 
 .studio-card-icon {
   font-size: 16px;
-  margin-top: 1px;
+  margin-top: 0;
   flex-shrink: 0;
   transition: transform 0.15s;
 }
 
 .studio-card:hover .studio-card-icon {
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 
 .studio-card-body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .studio-card-title {
@@ -340,17 +342,17 @@ body {
   font-size: 9.5px;
   color: #64748b;
   line-height: 1.2;
-  margin-top: 2px;
+  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .studio-drawer {
-  margin-top: 6px;
-  padding-top: 6px;
+  margin-top: 5px;
+  padding-top: 5px;
   border-top: 1px dashed #cbd5e1;
-  max-height: 230px;
+  max-height: 220px;
   overflow-y: auto;
   scrollbar-width: thin;
 }

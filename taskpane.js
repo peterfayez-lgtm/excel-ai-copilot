@@ -346,10 +346,10 @@ document.addEventListener("DOMContentLoaded", () => {
       actionHostBadge.textContent = host === "word" ? "Word" : "Excel";
     }
 
-    // تعبئة الكروت الأساسية الأربعة الأولى
+    // تعبئة الكروت الأساسية (خانة واحدة رأسية لتوفير مساحة الشاشة)
     if (studioPrimaryGrid) {
       studioPrimaryGrid.innerHTML = "";
-      actions.slice(0, 4).forEach(act => {
+      actions.slice(0, 3).forEach(act => {
         studioPrimaryGrid.appendChild(createActionCard(act));
       });
     }
@@ -357,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // تعبئة بقية الكروت في الدرج القابل للتوسيع
     if (studioSecondaryGrid) {
       studioSecondaryGrid.innerHTML = "";
-      actions.slice(4).forEach(act => {
+      actions.slice(3).forEach(act => {
         studioSecondaryGrid.appendChild(createActionCard(act));
       });
     }
