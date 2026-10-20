@@ -510,10 +510,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem("gemini_api_key") || "";
-    let savedModel = localStorage.getItem("gemini_model") || "gemini-2.5-flash";
-    if (savedModel === "gemini-3.8-flash") {
-      savedModel = "gemini-2.5-flash";
-      localStorage.setItem("gemini_model", "gemini-2.5-flash");
+    let savedModel = localStorage.getItem("gemini_model") || "gemini-3.8-flash";
+    // ترقية تلقائية إلى gemini-3.8-flash إذا كان الموديل القديم موقوفاً
+    if (!savedModel || savedModel === "gemini-2.5-flash" || savedModel === "gemini-1.5-flash") {
+      savedModel = "gemini-3.8-flash";
+      localStorage.setItem("gemini_model", "gemini-3.8-flash");
     }
     // التأكد من وجود الخيار بالقائمة المنسدلة
     const hasOption = Array.from(modelSelect.options).some(o => o.value === savedModel);
@@ -563,7 +564,9 @@ document.addEventListener("DOMContentLoaded", () => {
             opt.textContent = `${m.name} (${m.id})`;
             modelSelect.appendChild(opt);
           });
-          const best = available.find(m => m.id.includes("2.5") && m.id.includes("flash"))
+          const best = available.find(m => m.id.includes("3.8") && m.id.includes("flash"))
+            || available.find(m => m.id.includes("3.") && m.id.includes("flash"))
+            || available.find(m => m.id.includes("2.5") && m.id.includes("flash"))
             || available.find(m => m.id.includes("2.0") && m.id.includes("flash"))
             || available.find(m => m.id.includes("flash"))
             || available[0];

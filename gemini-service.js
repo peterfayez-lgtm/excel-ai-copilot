@@ -119,10 +119,11 @@ const GeminiService = {
    */
   async sendMessage(userMessage, contextData, options = {}) {
     const apiKey = options.apiKey || localStorage.getItem("gemini_api_key");
-    let model = options.model || localStorage.getItem("gemini_model") || "gemini-2.5-flash";
-    // التحقق من صلاحية الموديل والرجوع لـ gemini-2.5-flash كافتراضي رسمي ومجاني
-    if (!model || model === "gemini-3.8-flash") {
-      model = "gemini-2.5-flash";
+    let model = options.model || localStorage.getItem("gemini_model") || "gemini-3.8-flash";
+    // ترقية تلقائية إلى gemini-3.8-flash الموصى به رسمياً من جوجل إذا كان الموديل القديم موقوفاً
+    if (!model || model === "gemini-2.5-flash" || model === "gemini-1.5-flash") {
+      model = "gemini-3.8-flash";
+      localStorage.setItem("gemini_model", "gemini-3.8-flash");
     }
     const host = options.host || (contextData && contextData.host) || "excel";
     const safeMode = options.safeMode !== false;
@@ -498,37 +499,74 @@ ${safeMode ? `
       body: JSON.stringify(requestBody)
     });
 
-    // آلية المعالجة الذاتية التلقائية في حال عدم توفر الموديل (404 أو خطأ الإصدار)
+    // آلية المعالجة الذاتية التلقائية في حال عدم توفر الموديل أو توقفه (404, 400, no longer available)
     if (!response.ok) {
       const errClone = response.clone();
       const errorData = await errClone.json().catch(() => ({}));
       const errorMsg = errorData.error?.message || "";
 
-      const isModelNotFound = response.status === 404 ||
+      const isModelError = response.status === 404 ||
+        response.status === 400 ||
         errorMsg.includes("is not found") ||
-        errorMsg.includes("not supported for generateContent");
+        errorMsg.includes("not supported for generateContent") ||
+        errorMsg.includes("is no longer available") ||
+        errorMsg.includes("Please update your code to use") ||
+        errorMsg.includes("deprecated");
 
-      if (isModelNotFound) {
-        console.warn(`النموذج ${model} غير مدعوم على المسار الحالي، بدء التبديل الذكي التلقائي...`);
+      if (isModelError) {
+        console.warn(`النموذج ${model} واجه مشكلة (${errorMsg})، بدء التبديل الذكي التلقائي...`);
 
-        // 1. أولاً: تجربة إصدار v1 إذا كنا على v1beta، أو العكس
-        const altVersion = endpoint.includes("/v1beta/") ? "v1" : "v1beta";
-        const altEndpoint = `https://generativelanguage.googleapis.com/${altVersion}/models/${model}:generateContent?key=${apiKey}`;
-        let altRes = await fetch(altEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
-        }).catch(() => null);
+        // أ) التحقق أولاً إذا كانت رسالة خطأ جوجل تقترح موديلاً محدداً (مثل: Please update your code to use models/gemini-3.8-flash)
+        const matchRecommended = errorMsg.match(/Please update your code to use (?:models\/)?([a-zA-Z0-9.\-_]+)/i);
+        const suggestedModel = matchRecommended ? matchRecommended[1] : null;
 
-        if (altRes && altRes.ok) {
-          response = altRes;
-        } else {
-          // 2. ثانياً: استعلام ديناميكي من API جوجل لمعرفة النماذج المصرحة لمفتاح المستخدم (ListModels)
+        if (suggestedModel && suggestedModel !== model) {
+          console.log(`اكتشاف توصية جوجل الرسمية: التبديل إلى ${suggestedModel}`);
+          for (const ver of ["v1beta", "v1"]) {
+            const reqUrl = `https://generativelanguage.googleapis.com/${ver}/models/${suggestedModel}:generateContent?key=${apiKey}`;
+            const reqRes = await fetch(reqUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(requestBody)
+            }).catch(() => null);
+
+            if (reqRes && reqRes.ok) {
+              console.log(`نجح التحويل الفوري إلى الموديل المقترح من جوجل: ${suggestedModel} (${ver})`);
+              localStorage.setItem("gemini_model", suggestedModel);
+              try {
+                const modelSel = document.getElementById("modelSelect");
+                if (modelSel) modelSel.value = suggestedModel;
+              } catch (e) {}
+              response = reqRes;
+              break;
+            }
+          }
+        }
+
+        // ب) إذا لم ينجح، تجربة إصدار v1 إذا كنا على v1beta، أو العكس لنفس الموديل إن لم يكن موقوفاً
+        if (!response.ok && !errorMsg.includes("is no longer available")) {
+          const altVersion = endpoint.includes("/v1beta/") ? "v1" : "v1beta";
+          const altEndpoint = `https://generativelanguage.googleapis.com/${altVersion}/models/${model}:generateContent?key=${apiKey}`;
+          let altRes = await fetch(altEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+          }).catch(() => null);
+
+          if (altRes && altRes.ok) {
+            response = altRes;
+          }
+        }
+
+        // ج) استعلام ديناميكي من API جوجل لمعرفة النماذج المصرحة لمفتاح المستخدم (ListModels)
+        if (!response.ok) {
           console.warn("جاري الاستعلام التلقائي من خوادم جوجل عن النماذج المتاحة لمفتاحك...");
           const availableModels = await this.listAvailableModels(apiKey);
           if (availableModels && availableModels.length > 0) {
-            // اختيار أفضل نموذج فلاش متاح لمفتاح المستخدم
-            const best = availableModels.find(m => m.id.includes("2.5") && m.id.includes("flash"))
+            // ترتيب الأفضلية للنماذج الأحدث
+            const best = availableModels.find(m => m.id.includes("3.8") && m.id.includes("flash"))
+              || availableModels.find(m => m.id.includes("3.") && m.id.includes("flash"))
+              || availableModels.find(m => m.id.includes("2.5") && m.id.includes("flash"))
               || availableModels.find(m => m.id.includes("2.0") && m.id.includes("flash"))
               || availableModels.find(m => m.id.includes("flash-latest"))
               || availableModels.find(m => m.id.includes("flash-002"))
@@ -555,8 +593,8 @@ ${safeMode ? `
               }
             }
           } else {
-            // 3. ثالثاً: قائمة نماذج شائعة بديلة
-            const fallbackCandidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-002", "gemini-1.5-pro"];
+            // د) قائمة نماذج بديلة بالترتيب
+            const fallbackCandidates = ["gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash"];
             for (const cand of fallbackCandidates) {
               if (cand === model) continue;
               for (const v of ["v1beta", "v1"]) {
