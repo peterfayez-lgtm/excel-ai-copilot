@@ -8,7 +8,7 @@
 
   <!-- معرف فريد للإضافة -->
   <Id>7d3b0738-d113-4b44-934e-0a5682054139</Id>
-  <Version>1.0.0.1</Version>
+  <Version>1.0.0.2</Version>
   <ProviderName>Peter AI</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="AI Copilot (المساعد الذكي)"/>
