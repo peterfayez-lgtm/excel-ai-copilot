@@ -661,13 +661,50 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // تحويل مبسط للـ Markdown للعرض الجمالي للنصوص
+  // تحويل مبسط للـ Markdown للعرض الجمالي للنصوص مع دعم كتل الأكواد وزر نسخ الماكرو
   function formatMarkdown(text) {
     if (!text) return "";
-    return text
+
+    // معالجة كتل الأكواد والماكرو متعددة الأسطر ```lang ... ```
+    let formatted = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+      const cleanLang = lang.trim() || "VBA";
+      const escapedCode = code
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return `
+        <div class="code-block-wrapper">
+          <div class="code-block-header">
+            <span>💻 ${cleanLang.toUpperCase()}</span>
+            <button type="button" class="btn-copy-code" onclick="copyCodeSnippet(this)">📋 نسخ الكود</button>
+          </div>
+          <pre class="code-block-content"><code>${escapedCode}</code></pre>
+        </div>
+      `;
+    });
+
+    return formatted
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       .replace(/`([^`]+)`/g, "<code style='background:#e2e8f0;padding:1px 4px;border-radius:3px;font-family:monospace;'>$1</code>")
       .replace(/\n/g, "<br>");
   }
+
+  // وظيفة عامة لنسخ كود الماكرو بنقرة واحدة
+  window.copyCodeSnippet = function(buttonElement) {
+    const wrapper = buttonElement.closest(".code-block-wrapper");
+    if (!wrapper) return;
+    const codeElement = wrapper.querySelector("code");
+    if (!codeElement) return;
+    const codeText = codeElement.innerText;
+    navigator.clipboard.writeText(codeText).then(() => {
+      const originalText = buttonElement.innerHTML;
+      buttonElement.innerHTML = "✅ تم النسخ!";
+      setTimeout(() => {
+        buttonElement.innerHTML = originalText;
+      }, 2000);
+    }).catch(() => {
+      buttonElement.innerHTML = "✅ تم النسخ!";
+    });
+  };
 });

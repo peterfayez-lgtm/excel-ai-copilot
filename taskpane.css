@@ -611,6 +611,60 @@ textarea#userInput::placeholder {
   font-size: 16px;
 }
 
+/* ----------------- كتل الأكواد والماكرو (Code & VBA Blocks) ----------------- */
+.code-block-wrapper {
+  margin: 10px 0;
+  border-radius: var(--radius-sm);
+  background: #1e293b;
+  border: 1px solid #334155;
+  overflow: hidden;
+  direction: ltr;
+  text-align: left;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f172a;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  border-bottom: 1px solid #334155;
+}
+
+.btn-copy-code {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  direction: rtl;
+}
+
+.btn-copy-code:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.code-block-content {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #38bdf8;
+  background: transparent;
+  overflow-x: auto;
+  white-space: pre;
+}
+
 /* ----------------- نافذة الإعدادات (Modal) ----------------- */
 .modal-overlay {
   position: fixed;

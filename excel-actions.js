@@ -339,6 +339,57 @@ const ExcelEngine = {
             }
             break;
           }
+
+          // 10. قواعد التحقق من صحة البيانات والقوائم المنسدلة داخل خلايا الإكسيل (Data Validation & In-Cell Dropdowns)
+          case "SET_DATA_VALIDATION": {
+            if (action.range) {
+              const range = targetSheet.getRange(action.range);
+              try {
+                if (action.validationType === "list" && action.values) {
+                  const valuesList = Array.isArray(action.values) ? action.values.join(",") : String(action.values);
+                  range.dataValidation.rule = {
+                    list: {
+                      inCellDropDown: true,
+                      values: valuesList
+                    }
+                  };
+                  range.dataValidation.prompt = {
+                    showPrompt: true,
+                    title: action.promptTitle || "اختر من القائمة",
+                    message: action.promptMessage || "يرجى تحديد إحدى القيم المعتمدة"
+                  };
+                  range.dataValidation.errorAlert = {
+                    showAlert: true,
+                    style: "Stop",
+                    title: "قيمة غير مسموح بها",
+                    message: "يرجى اختيار قيمة من القائمة المنسدلة فقط."
+                  };
+                  executedDetails.push(`إنشاء قائمة منسدلة داخل الخلايا في ${action.range} بالقيم [${valuesList}]`);
+                } else if (action.validationType === "wholeNumber" || action.validationType === "decimal") {
+                  const valType = action.validationType === "wholeNumber" ? "wholeNumber" : "decimal";
+                  const ruleObj = {};
+                  ruleObj[valType] = {
+                    operator: action.operator || "GreaterThan",
+                    formula1: action.formula1 !== undefined ? String(action.formula1) : "0"
+                  };
+                  if (action.formula2 !== undefined) {
+                    ruleObj[valType].formula2 = String(action.formula2);
+                  }
+                  range.dataValidation.rule = ruleObj;
+                  range.dataValidation.errorAlert = {
+                    showAlert: true,
+                    style: "Stop",
+                    title: "رقم غير صالح",
+                    message: "القيمة المدخلة تخالف شروط التحقق من الأرقام."
+                  };
+                  executedDetails.push(`تطبيق قيود التحقق الرقمي على ${action.range}`);
+                }
+              } catch (valErr) {
+                console.warn("تنبيه في قواعد التحقق من صحة البيانات:", valErr);
+              }
+            }
+            break;
+          }
         }
       }
 
